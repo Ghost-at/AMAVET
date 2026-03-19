@@ -214,7 +214,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--cream);color:var(--text);
   <nav class="sidebar">
     <div class="sidebar-section">Clínica</div>
     <button class="nav-item active-mint" onclick="showView('pacientes',this,'mint')"><span class="nav-icon">🐶</span> Pacientes</button>
-    <button class="nav-item" onclick="showView('historias',this,'pink')"><span class="nav-icon">📋</span> Historias</button>
+    <button class="nav-item" onclick="showView('agenda',this,'pink')"><span class="nav-icon">📅</span> Agenda</button>
     <button class="nav-item" onclick="showView('examenes',this,'yellow')"><span class="nav-icon">🔬</span> Exámenes</button>
     <button class="nav-item" onclick="showView('formulas',this,'pink')"><span class="nav-icon">💊</span> Formulación</button>
     <div class="sidebar-section">Gestión</div>
@@ -253,9 +253,53 @@ body{font-family:'DM Sans',sans-serif;background:var(--cream);color:var(--text);
         </div>
       </div>
       <div id="lista-pacientes" class="patient-grid"></div>
+
+      <!-- HISTORIAS CLÍNICAS dentro de Pacientes -->
+      <div style="margin-top:28px;">
+        <div class="section-header">
+          <h2 style="font-family:'Playfair Display',serif;font-size:20px;font-weight:500;color:var(--text);">Historias clínicas</h2>
+          <button class="btn btn-rose" onclick="togglePanel('panel-historia')">+ Nueva consulta</button>
+        </div>
+        <div class="card" style="padding:12px 16px;margin-bottom:14px;">
+          <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+            <label style="font-size:12px;color:var(--text-muted);white-space:nowrap;flex-shrink:0;">Filtrar por paciente:</label>
+            <select id="h-filtro-paciente" style="flex:1;min-width:160px;font-family:'DM Sans',sans-serif;font-size:13px;padding:8px 12px;border:1.5px solid var(--border);border-radius:var(--radius-sm);background:var(--cream);color:var(--text);outline:none;" onchange="renderHistorias()">
+              <option value="">Todos los pacientes</option>
+            </select>
+            <span id="h-filtro-count" style="font-size:12px;color:var(--text-muted);white-space:nowrap;"></span>
+          </div>
+        </div>
+        <div id="panel-historia" class="form-panel">
+          <div class="card">
+            <div class="card-title">Nueva consulta</div>
+            <div class="field-row">
+              <div class="field"><label>Paciente</label><select id="h-paciente"><option value="">Seleccionar...</option></select></div>
+              <div class="field"><label>Motivo</label>
+                <select id="h-motivo"><option>Consulta general</option><option>Vacunación</option><option>Desparasitación</option><option>Control de peso</option><option>Urgencia</option><option>Cirugía</option><option>Seguimiento</option><option>Otro</option></select>
+              </div>
+            </div>
+            <div class="field"><label>Fecha consulta</label><input id="h-fecha" type="datetime-local"/></div>
+            <div class="soap-grid">
+              <div class="field"><div class="mic-wrap"><label class="soap-label">S: Subjetivo (Anamnesis)</label><button class="mic-btn" id="mic-btn-s" onclick="toggleMic('h-subjetivo','mic-btn-s','mic-status-s')">🎙️</button></div><textarea id="h-subjetivo" placeholder="Síntomas referidos por el propietario..."></textarea><div class="mic-status" id="mic-status-s">🔴 Escuchando...</div></div>
+              <div class="field"><div class="mic-wrap"><label class="soap-label">O: Objetivo (Detalles del examen)</label><button class="mic-btn" id="mic-btn-o" onclick="toggleMic('h-objetivo','mic-btn-o','mic-status-o')">🎙️</button></div><textarea id="h-objetivo" placeholder="Detalles del examen físico..."></textarea><div class="mic-status" id="mic-status-o">🔴 Escuchando...</div></div>
+              <div class="field soap-full"><div class="mic-wrap"><label class="soap-label">I: Interpretación (Diagnóstico presuntivo/final)</label><button class="mic-btn" id="mic-btn-i" onclick="toggleMic('h-interpretacion','mic-btn-i','mic-status-i')">🎙️</button></div><textarea id="h-interpretacion" placeholder="Diagnóstico presuntivo, diferencial y final..."></textarea><div class="mic-status" id="mic-status-i">🔴 Escuchando...</div></div>
+              <div class="field"><div class="mic-wrap"><label class="soap-label">P: Plan terapéutico</label><button class="mic-btn" id="mic-btn-pt" onclick="toggleMic('h-plan-terapeutico','mic-btn-pt','mic-status-pt')">🎙️</button></div><textarea id="h-plan-terapeutico" placeholder="Tratamiento..."></textarea><div class="mic-status" id="mic-status-pt">🔴 Escuchando...</div></div>
+              <div class="field"><div class="mic-wrap"><label class="soap-label">P: Plan diagnóstico</label><button class="mic-btn" id="mic-btn-pd" onclick="toggleMic('h-plan-diagnostico','mic-btn-pd','mic-status-pd')">🎙️</button></div><textarea id="h-plan-diagnostico" placeholder="Plan diagnóstico..."></textarea><div class="mic-status" id="mic-status-pd">🔴 Escuchando...</div></div>
+            </div>
+            <div class="field"><label>Próxima cita</label><input id="h-proxima" type="date"/></div>
+            <div class="btn-row">
+              <button class="btn btn-rose" onclick="guardarHistoria()">Guardar</button>
+              <button class="btn btn-lemon" onclick="prepararWP()">📱 WP</button>
+              <button class="btn" onclick="togglePanel('panel-historia')">Cancelar</button>
+            </div>
+            <div id="wp-msg" style="display:none;"></div>
+          </div>
+        </div>
+        <div id="lista-historias"></div>
+      </div>
     </div>
 
-    <!-- HISTORIAS -->
+    <!-- AGENDA -->
     <div id="view-agenda" class="view">
       <div class="section-header">
         <h1 class="page-title">Agenda</h1>
@@ -433,7 +477,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--cream);color:var(--text);
 <nav class="bottom-nav">
   <div class="bottom-nav-inner">
     <button class="bnav-item active-mint" id="bn-pacientes" onclick="showView('pacientes',null,'mint');setBNav('bn-pacientes','mint')"><span class="bi">🐶</span><span class="bl">Pacientes</span></button>
-    <button class="bnav-item" id="bn-historias" onclick="showView('historias',null,'pink');setBNav('bn-historias','pink')"><span class="bi">📋</span><span class="bl">Historias</span></button>
+    <button class="bnav-item" id="bn-agenda" onclick="showView('agenda',null,'pink');setBNav('bn-agenda','pink')"><span class="bi">📅</span><span class="bl">Agenda</span></button>
     <button class="bnav-item" id="bn-examenes" onclick="showView('examenes',null,'yellow');setBNav('bn-examenes','yellow')"><span class="bi">🔬</span><span class="bl">Exámenes</span></button>
     <button class="bnav-item" id="bn-contable" onclick="showView('contable',null,'mint');setBNav('bn-contable','mint')"><span class="bi">💰</span><span class="bl">Contable</span></button>
     <button class="bnav-item" id="bn-inventario" onclick="showView('inventario',null,'yellow');setBNav('bn-inventario','yellow')"><span class="bi">📦</span><span class="bl">Inventario</span></button>
@@ -1260,9 +1304,9 @@ function formatHora12(h){
 
 function wpAgenda(aid){
   const a=agenda.find(x=>x.id===aid);if(!a)return;
-  const tel='57'+(a.celular||'').replace(/\D/g,'');
+  const tel='57'+(a.celular||'').replace(/[^0-9]/g,'');
   const esp=a.especie==='Canino'?'🐶':a.especie==='Felino'?'🐱':'🐾';
-  const msg=`Hola ${a.propietario||''}! Le recordamos que tiene una cita para *${a.paciente}* ${esp} el *${a.fecha}* a las *${formatHora12(a.hora)}*.${a.motivo?' Motivo: '+a.motivo:''} \n\nAMAVET CRG 🐾`;
+  const msg='Hola '+( a.propietario||'')+`! Le recordamos que tiene una cita para *${a.paciente}* ${esp} el *${a.fecha}* a las *${formatHora12(a.hora)}*. `+(a.motivo?'Motivo: '+a.motivo+'. ':'')+`\n\nAMAVET CRG 🐾`;
   window.open(`https://wa.me/${tel}?text=${encodeURIComponent(msg)}`,'_blank');
 }
 
@@ -1283,7 +1327,7 @@ function exportarAgendaExcel(){
     ...agenda.map(a=>[a.fecha||'',a.hora?formatHora12(a.hora):'',a.paciente||'',a.especie||'',a.propietario||'',a.celular||'',a.motivo||''])
   ];
   let csv='';
-  rows.forEach(r=>{csv+=r.map(v=>String(v).includes(',')? `"${v}"`:v).join(',')+'\'+'n';});
+  rows.forEach(r=>{csv+=r.map(v=>String(v).includes(',')? `"${v}"`:v).join(',')+String.fromCharCode(10);});
   const blob=new Blob(['\uFEFF'+csv],{type:'text/csv;charset=utf-8;'});
   const url=URL.createObjectURL(blob);
   const a2=document.createElement('a');a2.href=url;
