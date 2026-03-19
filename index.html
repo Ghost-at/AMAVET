@@ -595,12 +595,12 @@ async function init(){
   setCloud('saving','conectando...');
   try{
     const [p,h,e,m,i,f]=await Promise.all([
-      sb.from('pacientes').select('*').order('created_at',{ascending:false}),
-      sb.from('historias').select('*').order('created_at',{ascending:false}),
-      sb.from('examenes').select('*').order('created_at',{ascending:false}),
-      sb.from('movimientos').select('*').order('created_at',{ascending:false}),
-      sb.from('inventario').select('*').order('created_at',{ascending:false}),
-      sb.from('formulas').select('*').order('created_at',{ascending:false})
+      sb.from('pacientes').select('*').order('created_at',{ascending:false}).limit(5000),
+      sb.from('historias').select('*').order('created_at',{ascending:false}).limit(5000),
+      sb.from('examenes').select('*').order('created_at',{ascending:false}).limit(5000),
+      sb.from('movimientos').select('*').order('created_at',{ascending:false}).limit(5000),
+      sb.from('inventario').select('*').order('created_at',{ascending:false}).limit(5000),
+      sb.from('formulas').select('*').order('created_at',{ascending:false}).limit(5000)
     ]);
     pacientes=p.data||[];historias=h.data||[];examenes=e.data||[];
     movimientos=m.data||[];inventario=i.data||[];formulas=f.data||[];
@@ -692,7 +692,7 @@ function renderPacientes(){
       <div class="patient-sub">👤 ${p.dueno||''} · 📞 ${p.tel||''}${p.email?' · ✉️ '+p.email:''}</div>
     </div>
     <div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px;flex-shrink:0;">
-      <span class="badge badge-mint">${historias.filter(h=>h.paciente_id===p.id).length} consultas</span>
+      <span class="badge badge-mint">${historias.filter(h=>Number(h.paciente_id)===Number(p.id)).length} consultas</span>
       <button class="btn btn-sm btn-lemon" onclick="abrirEdicionPaciente(${p.id})">✏️ Editar</button>
     </div>
   </div>`).join('');
@@ -704,7 +704,7 @@ function renderPacientes(){
 async function guardarHistoria(){
   const pid=parseInt(document.getElementById('h-paciente').value);
   if(!pid){alert('Selecciona un paciente');return;}
-  const row={id:Date.now(),paciente_id:pid,fecha:document.getElementById('h-fecha').value||new Date().toISOString(),motivo:document.getElementById('h-motivo').value,subjetivo:document.getElementById('h-subjetivo').value,objetivo:document.getElementById('h-objetivo').value,interpretacion:document.getElementById('h-interpretacion').value,plan_terapeutico:document.getElementById('h-plan-terapeutico').value,plan_diagnostico:document.getElementById('h-plan-diagnostico').value,proxima:document.getElementById('h-proxima').value};
+  const row={id:Date.now(),paciente_id:Number(pid),fecha:document.getElementById('h-fecha').value||new Date().toISOString(),motivo:document.getElementById('h-motivo').value,subjetivo:document.getElementById('h-subjetivo').value,objetivo:document.getElementById('h-objetivo').value,interpretacion:document.getElementById('h-interpretacion').value,plan_terapeutico:document.getElementById('h-plan-terapeutico').value,plan_diagnostico:document.getElementById('h-plan-diagnostico').value,proxima:document.getElementById('h-proxima').value};
   setCloud('saving','guardando...');
   const {error}=await sb.from('historias').insert(row);
   if(error){setCloud('err','error');alert(error.message);return;}
@@ -716,7 +716,7 @@ async function guardarHistoria(){
 function renderHistorias(){
   const c=document.getElementById('lista-historias');
   const filtro=document.getElementById('h-filtro-paciente')?.value||'';
-  const filtradas=filtro?historias.filter(h=>h.paciente_id==filtro):historias;
+  const filtradas=filtro?historias.filter(h=>Number(h.paciente_id)===Number(filtro)):historias;
   const countEl=document.getElementById('h-filtro-count');
   if(countEl){
     if(filtro){
@@ -956,7 +956,7 @@ async function subirExamen(){
 function renderExamenes(){
   const c=document.getElementById('lista-examenes');
   const filtro=document.getElementById('e-filtro-paciente')?.value||'';
-  const filtrados=filtro?examenes.filter(e=>e.paciente_id==filtro):examenes;
+  const filtrados=filtro?examenes.filter(e=>Number(e.paciente_id)===Number(filtro)):examenes;
   if(!filtrados.length){c.innerHTML=`<div class="empty-state"><div class="empty-icon">🔬</div><div>No hay exámenes almacenados</div></div>`;return;}
   // Group by patient
   const byPaciente={};
@@ -1026,7 +1026,7 @@ async function guardarFormula(){
   const pid=parseInt(document.getElementById('f-paciente').value);
   if(!pid){alert('Selecciona un paciente');return;}
   const p=pacientes.find(x=>x.id===pid);
-  const pFormulas=formulas.filter(f=>f.paciente_id===pid);
+  const pFormulas=formulas.filter(f=>Number(f.paciente_id)===Number(pid));
   if(pFormulas.length>=2){alert(`${p.nombre} ya tiene 2 fórmulas. Elimina una antes.`);return;}
   const meds=[];
   for(let i=1;i<=medCount;i++){
@@ -1034,7 +1034,7 @@ async function guardarFormula(){
     if(nom&&nom.value.trim())meds.push({nombre:nom.value,dosis:document.getElementById(`med-dosis-${i}`).value,frecuencia:document.getElementById(`med-freq-${i}`).value,duracion:document.getElementById(`med-dur-${i}`).value,via:document.getElementById(`med-via-${i}`).value});
   }
   if(!meds.length){alert('Agrega al menos un medicamento');return;}
-  const row={id:Date.now(),paciente_id:pid,fecha:document.getElementById('f-fecha').value,diagnostico:document.getElementById('f-diagnostico').value,medicamentos:JSON.stringify(meds),indicaciones:document.getElementById('f-indicaciones').value,medico:document.getElementById('f-medico').value};
+  const row={id:Date.now(),paciente_id:Number(pid),fecha:document.getElementById('f-fecha').value,diagnostico:document.getElementById('f-diagnostico').value,medicamentos:JSON.stringify(meds),indicaciones:document.getElementById('f-indicaciones').value,medico:document.getElementById('f-medico').value};
   setCloud('saving','guardando...');
   const {error}=await sb.from('formulas').insert(row);
   if(error){setCloud('err','error');alert(error.message);return;}
