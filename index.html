@@ -230,6 +230,10 @@ body{font-family:'DM Sans',sans-serif;background:var(--cream);color:var(--text);
         <h1 class="page-title">Pacientes</h1>
         <button class="btn btn-mint" onclick="togglePanel('panel-paciente')">+ Nuevo</button>
       </div>
+      <!-- Buscador -->
+      <div class="card" style="padding:12px 16px;margin-bottom:14px;">
+        <input id="p-search" placeholder="🔍 Buscar por nombre del paciente o propietario..." style="width:100%;border:none;background:none;font-size:14px;font-family:'DM Sans',sans-serif;outline:none;color:var(--text);" oninput="renderPacientes()"/>
+      </div>
       <div id="panel-paciente" class="form-panel">
         <div class="card">
           <div class="card-title">Registrar paciente</div>
@@ -389,7 +393,35 @@ body{font-family:'DM Sans',sans-serif;background:var(--cream);color:var(--text);
     <div id="view-formulas" class="view">
       <div class="section-header">
         <h1 class="page-title">Formulación médica</h1>
-        <button class="btn btn-rose" onclick="togglePanel('panel-formula')">+ Nueva fórmula</button>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;">
+          <button class="btn btn-lemon" onclick="togglePanel('panel-remision')">📋 Nueva remisión</button>
+          <button class="btn btn-rose" onclick="togglePanel('panel-formula')">+ Nueva fórmula</button>
+        </div>
+      </div>
+      <!-- PANEL REMISIÓN -->
+      <div id="panel-remision" class="form-panel">
+        <div class="card">
+          <div class="card-title">Nueva remisión a clínica veterinaria</div>
+          <div class="field-row">
+            <div class="field"><label>Paciente</label><select id="r-paciente"><option value="">Seleccionar...</option></select></div>
+            <div class="field"><label>Fecha</label><input id="r-fecha" type="date"/></div>
+          </div>
+          <div class="field-row">
+            <div class="field"><label>Remitido a (clínica / especialista)</label><input id="r-destino" placeholder="Clínica Veterinaria XYZ - Dr. Nombre"/></div>
+            <div class="field"><label>Especialidad / Servicio</label><input id="r-especialidad" placeholder="Cardiología, Cirugía, Imágenes..."/></div>
+          </div>
+          <div class="field"><label>Motivo de remisión</label><textarea id="r-motivo" placeholder="Descripción del motivo clínico por el que se remite el paciente..." style="min-height:60px;"></textarea></div>
+          <div class="field"><label>Diagnóstico presuntivo</label><input id="r-diagnostico" placeholder="Diagnóstico o sospecha diagnóstica"/></div>
+          <div class="field"><label>Historia clínica resumida</label><textarea id="r-historia" placeholder="Resumen de anamnesis, signos clínicos relevantes, exámenes realizados..."></textarea></div>
+          <div class="field"><label>Medicamentos actuales</label><textarea id="r-meds" placeholder="Medicamentos que está recibiendo actualmente el paciente..." style="min-height:60px;"></textarea></div>
+          <div class="field"><label>Exámenes adjuntos / realizados</label><input id="r-examenes" placeholder="Hemograma, radiografías, ecografía... (adjunte si es posible)"/></div>
+          <div class="field"><label>Solicitud específica al especialista</label><textarea id="r-solicitud" placeholder="Qué se solicita al especialista: valoración, procedimiento, diagnóstico..." style="min-height:60px;"></textarea></div>
+          <div class="field"><label>Observaciones adicionales</label><input id="r-obs" placeholder="Cuidados especiales, restricciones, urgencia..."/></div>
+          <div class="btn-row">
+            <button class="btn btn-lemon" onclick="generarRemision()">📄 Generar PDF remisión</button>
+            <button class="btn" onclick="togglePanel('panel-remision')">Cancelar</button>
+          </div>
+        </div>
       </div>
       <div id="panel-formula" class="form-panel">
         <div class="card">
@@ -582,6 +614,7 @@ async function init(){
   document.getElementById('h-fecha').value=`${todayISO}T${pad(now.getHours())}:${pad(now.getMinutes())}`;
   document.getElementById('f-fecha').value=todayISO;
   document.getElementById('e-fecha').value=todayISO;
+  const rFechaEl=document.getElementById('r-fecha');if(rFechaEl)rFechaEl.value=todayISO;
   agregarMedicamento();
 }
 
@@ -608,7 +641,7 @@ function setBNav(activeId,color){
 function togglePanel(id){document.getElementById(id).classList.toggle('open');}
 
 function syncSelects(){
-  ['h-paciente','e-paciente','f-paciente'].forEach(id=>{
+  ['h-paciente','e-paciente','f-paciente','r-paciente'].forEach(id=>{
     const s=document.getElementById(id);if(!s)return;
     s.innerHTML='<option value="">Seleccionar...</option>'+pacientes.map(p=>`<option value="${p.id}">${EMOJIS[p.especie]||'🐾'} ${p.nombre} — ${p.dueno||''}</option>`).join('');
   });
@@ -640,8 +673,18 @@ async function guardarPaciente(){
 
 function renderPacientes(){
   const c=document.getElementById('lista-pacientes');
+  const q=(document.getElementById('p-search')?.value||'').toLowerCase().trim();
+  let lista=pacientes;
+  let mostrandoTodos=false;
+  if(q){
+    lista=pacientes.filter(p=>(p.nombre||'').toLowerCase().includes(q)||(p.dueno||'').toLowerCase().includes(q));
+    mostrandoTodos=true;
+  } else {
+    lista=pacientes.slice(0,2);
+  }
   if(!pacientes.length){c.innerHTML=`<div class="empty-state"><div class="empty-icon">🐾</div><div>No hay pacientes registrados aún</div></div>`;return;}
-  c.innerHTML=pacientes.map(p=>`<div class="patient-card">
+  if(q&&!lista.length){c.innerHTML=`<div class="empty-state"><div class="empty-icon">🔍</div><div>Sin resultados para "${q}"</div></div>`;return;}
+  const cards=lista.map(p=>`<div class="patient-card">
     <div class="avatar ${AVCLS[p.especie]||'av-otro'}">${EMOJIS[p.especie]||'🐾'}</div>
     <div class="patient-info">
       <div class="patient-name">${EMOJIS[p.especie]||'🐾'} ${p.nombre}</div>
@@ -653,6 +696,8 @@ function renderPacientes(){
       <button class="btn btn-sm btn-lemon" onclick="abrirEdicionPaciente(${p.id})">✏️ Editar</button>
     </div>
   </div>`).join('');
+  const hint=!q&&pacientes.length>2?`<div style="text-align:center;padding:10px;font-size:12px;color:var(--text-muted);">Mostrando los 2 más recientes · Busca por nombre para ver todos (${pacientes.length} total)</div>`:'';
+  c.innerHTML=cards+hint;
 }
 
 // ── HISTORIAS ──
@@ -709,54 +754,106 @@ function renderHistorias(){
   }).join('');
 }
 
+function pdfHeader(doc,titulo,subtitulo){
+  // Colores pastel
+  const verde=[168,218,181];const rosa=[240,198,210];const menta=[200,235,215];
+  // Header fondo verde pastel
+  doc.setFillColor(...verde);doc.rect(0,0,210,32,'F');
+  doc.setTextColor(30,90,55);doc.setFont('helvetica','bold');doc.setFontSize(20);
+  doc.text('AMAVET',14,16);
+  doc.setFont('helvetica','normal');doc.setFontSize(8);doc.setTextColor(40,110,65);
+  doc.text('Centro de Bienestar y Salud Animal',14,22);
+  doc.text('Dra. Ana María Jurado Gutiérrez  ·  TP: 33235',14,27);
+  // Right side
+  doc.setFont('helvetica','bold');doc.setFontSize(11);doc.setTextColor(30,90,55);
+  doc.text(titulo,196,14,{align:'right'});
+  doc.setFont('helvetica','normal');doc.setFontSize(8);
+  doc.text(subtitulo,196,20,{align:'right'});
+  doc.text('1128445377 La Unión',196,25,{align:'right'});
+  doc.text('3194767751 - amavetlaunion@gmail.com',196,30,{align:'right'});
+  // Línea separadora
+  doc.setDrawColor(...verde);doc.setLineWidth(0.5);doc.line(10,34,200,34);
+}
+
+function pdfSectionLabel(doc,label,y,color){
+  doc.setFillColor(...color);doc.rect(10,y,190,7,'F');
+  doc.setTextColor(30,70,50);doc.setFont('helvetica','bold');doc.setFontSize(8.5);
+  doc.text(label,14,y+5);
+  return y+8;
+}
+
+function pdfSectionBody(doc,text,y,color){
+  const bgLight=color.map(c=>Math.min(255,c+55));
+  const lines=doc.splitTextToSize(text,182);
+  const h=lines.length*4.5+4;
+  doc.setFillColor(...bgLight);doc.rect(10,y,190,h,'F');
+  doc.setTextColor(30,30,30);doc.setFont('helvetica','normal');doc.setFontSize(8.5);
+  lines.forEach((l,i)=>doc.text(l,14,y+4+i*4.5));
+  return y+h+2;
+}
+
+function pdfDatosBox(doc,rows,y){
+  const bg=[240,248,243];
+  const total=rows.length*5+8;
+  doc.setFillColor(...bg);doc.rect(10,y,190,total,'F');
+  doc.setDrawColor(168,218,181);doc.setLineWidth(0.3);doc.rect(10,y,190,total);
+  doc.setFont('helvetica','bold');doc.setFontSize(8);doc.setTextColor(30,90,55);
+  doc.text('DATOS DEL PACIENTE',14,y+5);
+  doc.setFont('helvetica','normal');doc.setTextColor(40,40,40);
+  rows.forEach((r,i)=>doc.text(r,14,y+10+i*5));
+  return y+total+3;
+}
+
+function pdfFirma(doc,y){
+  // Espacio firma
+  const rosa=[240,198,210];
+  if(y<230)y=230;
+  doc.setDrawColor(168,218,181);doc.setLineWidth(0.4);doc.line(120,y,200,y);
+  doc.setFont('helvetica','bold');doc.setFontSize(9);doc.setTextColor(30,90,55);
+  doc.text('Dra. Ana María Jurado Gutiérrez',160,y+5,{align:'center'});
+  doc.setFont('helvetica','normal');doc.setFontSize(8);doc.setTextColor(80,80,80);
+  doc.text('M.V. - TP: 33235',160,y+10,{align:'center'});
+  doc.text('Sello:',14,y+5);
+  doc.setDrawColor(180,180,180);doc.rect(14,y+7,50,20);
+  // Footer
+  doc.setFillColor(...rosa);doc.rect(0,283,210,14,'F');
+  doc.setTextColor(139,34,82);doc.setFontSize(7.5);doc.setFont('helvetica','italic');
+  doc.text('AMAVET CRG  ·  Dra. Ana María Jurado Gutiérrez  ·  TP: 33235  ·  amavetlaunion@gmail.com',105,290,{align:'center'});
+}
+
 function generarPDFHistoria(hid){
   const h=historias.find(x=>x.id===hid);if(!h)return;
   const p=pacientes.find(x=>x.id===h.paciente_id);
   const {jsPDF}=window.jspdf;const doc=new jsPDF();
-  const rosa=[232,180,201];const verde=[168,218,181];const amarillo=[253,230,138];const azul=[180,212,244];
-  // Header
-  doc.setFillColor(...rosa);doc.rect(0,0,210,28,'F');
-  doc.setTextColor(139,34,82);doc.setFont('helvetica','bold');doc.setFontSize(18);doc.text('AMAVET',105,13,{align:'center'});
-  doc.setFontSize(10);doc.setFont('helvetica','normal');doc.text('Historia Clínica Veterinaria',105,21,{align:'center'});
-  // Datos paciente
-  doc.setFillColor(245,245,245);doc.rect(10,32,190,30,'F');
-  doc.setTextColor(42,42,42);doc.setFont('helvetica','bold');doc.setFontSize(10);doc.text('DATOS DEL PACIENTE',14,40);
-  doc.setFont('helvetica','normal');doc.setFontSize(9);
-  doc.text(`Paciente: ${p?p.nombre:'?'}   Especie: ${p?p.especie:''}   Raza: ${p?p.raza||'':''}   Edad: ${p?p.edad||'':''}`,14,47);
-  doc.text(`Propietario: ${p?p.dueno||'':''}   Tel: ${p?p.tel||'':''}   Correo: ${p?p.email||'':''}`,14,53);
-  doc.text(`Fecha consulta: ${h.fecha?h.fecha.replace('T',' ').substring(0,16):'-'}   Motivo: ${h.motivo||''}`,14,59);
-  // SOAP
-  let y=68;
-  const sections=[
-    {color:verde,label:'S: SUBJETIVO (ANAMNESIS)',text:h.subjetivo},
-    {color:azul,label:'O: OBJETIVO (EXAMEN FÍSICO)',text:h.objetivo},
-    {color:amarillo,label:'I: INTERPRETACIÓN (DIAGNÓSTICO)',text:h.interpretacion},
-    {color:verde,label:'P: PLAN TERAPÉUTICO',text:h.plan_terapeutico},
-    {color:azul,label:'P: PLAN DIAGNÓSTICO',text:h.plan_diagnostico},
+  const verde=[168,218,181];const azul=[180,215,240];const amarillo=[250,230,140];const rosa2=[240,198,210];
+  pdfHeader(doc,'Historia Clínica','Veterinaria');
+  // Datos
+  const fd=h.fecha?h.fecha.replace('T',' ').substring(0,16):'-';
+  let y=pdfDatosBox(doc,[
+    `Paciente: ${p?p.nombre:'?'}   Especie: ${p?p.especie:''}   Raza: ${p?p.raza||'':''}   Edad: ${p?p.edad||'':''}`,
+    `Propietario: ${p?p.dueno||'':''}   Tel: ${p?p.tel||'':''}   Email: ${p?p.email||'':''}`,
+    `Fecha: ${fd}   Motivo: ${h.motivo||''}`
+  ],37);
+  // SOAP sections
+  const secs=[
+    {label:'S: SUBJETIVO (ANAMNESIS)',text:h.subjetivo,color:verde},
+    {label:'O: OBJETIVO (EXAMEN FÍSICO)',text:h.objetivo,color:azul},
+    {label:'I: INTERPRETACIÓN / DIAGNÓSTICO',text:h.interpretacion,color:amarillo},
+    {label:'P: PLAN TERAPÉUTICO',text:h.plan_terapeutico,color:verde},
+    {label:'P: PLAN DIAGNÓSTICO',text:h.plan_diagnostico,color:azul},
   ];
-  sections.forEach(sec=>{
-    if(!sec.text)return;
-    if(y>260){doc.addPage();y=20;}
-    doc.setFillColor(...sec.color);doc.rect(10,y,190,8,'F');
-    doc.setTextColor(42,42,42);doc.setFont('helvetica','bold');doc.setFontSize(9);doc.text(sec.label,14,y+5.5);
-    y+=10;
-    doc.setFont('helvetica','normal');doc.setFontSize(9);doc.setTextColor(50,50,50);
-    const lines=doc.splitTextToSize(sec.text,182);
-    lines.forEach(line=>{if(y>270){doc.addPage();y=20;}doc.text(line,14,y);y+=5;});
-    y+=4;
+  secs.forEach(s=>{
+    if(!s.text)return;
+    if(y>255){doc.addPage();y=20;}
+    y=pdfSectionLabel(doc,s.label,y,s.color);
+    y=pdfSectionBody(doc,s.text,y,s.color);
   });
-  // Proxima cita
   if(h.proxima){
-    doc.setFillColor(...rosa);doc.rect(10,y,190,10,'F');
-    doc.setTextColor(139,34,82);doc.setFont('helvetica','bold');doc.setFontSize(9);
-    doc.text(`PRÓXIMA CITA: ${h.proxima}`,14,y+7);y+=14;
+    if(y>265){doc.addPage();y=20;}
+    y=pdfSectionLabel(doc,`PRÓXIMA CITA: ${h.proxima}`,y,rosa2);y+=2;
   }
-  // Footer
-  doc.setFillColor(...rosa);doc.rect(0,284,210,13,'F');
-  doc.setTextColor(139,34,82);doc.setFontSize(8);doc.setFont('helvetica','italic');
-  doc.text('AMAVET CRG — Historia Clínica Veterinaria',105,291,{align:'center'});
-  const fname=`historia_${p?p.nombre:'paciente'}_${(h.fecha||'').substring(0,10)}.pdf`;
-  doc.save(fname);
+  pdfFirma(doc,y+10);
+  doc.save(`historia_${p?p.nombre:'paciente'}_${(h.fecha||'').substring(0,10)}.pdf`);
 }
 
 function abrirEdicion(hid){
@@ -951,42 +1048,34 @@ async function guardarFormula(){
 function generarPDFFormula(formula,paciente){
   const {jsPDF}=window.jspdf;const doc=new jsPDF();
   const meds=JSON.parse(formula.medicamentos||'[]');
-  const rosa=[232,180,201];const verde=[168,218,181];const amarillo=[253,230,138];
-  doc.setFillColor(...rosa);doc.rect(0,0,210,30,'F');
-  doc.setTextColor(139,34,82);doc.setFont('helvetica','bold');doc.setFontSize(18);doc.text('AMAVET',105,13,{align:'center'});
-  doc.setFontSize(10);doc.setFont('helvetica','normal');doc.text('Fórmula Médica Veterinaria',105,22,{align:'center'});
-  doc.setFillColor(245,245,245);doc.rect(10,34,190,34,'F');
-  doc.setTextColor(42,42,42);doc.setFont('helvetica','bold');doc.setFontSize(10);doc.text('DATOS DEL PACIENTE',14,43);
-  doc.setFont('helvetica','normal');doc.setFontSize(9);
-  doc.text(`Paciente: ${paciente.nombre}   Especie: ${paciente.especie||''}   Raza: ${paciente.raza||''}   Edad: ${paciente.edad||''}`,14,50);
-  doc.text(`Propietario: ${paciente.dueno||''}   Tel: ${paciente.tel||''}   Fecha: ${formula.fecha||''}`,14,57);
-  doc.text(`Correo: ${paciente.email||''}`,14,64);
-  doc.setFillColor(...verde);doc.rect(10,72,190,12,'F');
-  doc.setTextColor(45,110,64);doc.setFont('helvetica','bold');doc.setFontSize(10);doc.text(`DIAGNÓSTICO: ${formula.diagnostico||''}`,14,80);
-  doc.setTextColor(42,42,42);doc.setFont('helvetica','bold');doc.setFontSize(11);doc.text('MEDICAMENTOS',14,96);
-  let y=104;
+  const verde=[168,218,181];const amarillo=[250,230,140];const rosa2=[240,198,210];
+  pdfHeader(doc,'Fórmula Médica','Reservado al tratamiento de animales');
+  let y=pdfDatosBox(doc,[
+    `Paciente: ${paciente.nombre}   Especie: ${paciente.especie||''}   Raza: ${paciente.raza||''}   Edad: ${paciente.edad||''}`,
+    `Propietario: ${paciente.dueno||''}   Tel: ${paciente.tel||''}   Email: ${paciente.email||''}`,
+    `Fecha: ${formula.fecha||''}   Registro por: Dra. Ana María Jurado Gutiérrez`
+  ],37);
+  // Diagnóstico
+  y=pdfSectionLabel(doc,`DIAGNÓSTICO: ${formula.diagnostico||''}`,y,verde);y+=2;
+  // Medicamentos header
+  y=pdfSectionLabel(doc,'MEDICAMENTOS',y,[200,235,215]);y+=3;
   meds.forEach((med,i)=>{
     if(y>255){doc.addPage();y=20;}
-    doc.setFillColor(i%2===0?248:255,i%2===0?252:255,i%2===0?248:255);doc.rect(10,y-5,190,20,'F');
-    doc.setFont('helvetica','bold');doc.setFontSize(10);doc.setTextColor(42,42,42);doc.text(`${i+1}. ${med.nombre}`,14,y+2);
-    doc.setFont('helvetica','normal');doc.setFontSize(9);doc.setTextColor(90,90,90);
-    doc.text(`Dosis: ${med.dosis}   Frecuencia: ${med.frecuencia}   Duración: ${med.duracion}   Vía: ${med.via}`,14,y+10);
-    y+=22;
+    const bg=i%2===0?[235,248,240]:[245,252,247];
+    const h2=14;
+    doc.setFillColor(...bg);doc.rect(10,y,190,h2,'F');
+    doc.setFont('helvetica','bold');doc.setFontSize(9);doc.setTextColor(30,90,55);
+    doc.text(`${i+1}. ${med.nombre}`,14,y+5);
+    doc.setFont('helvetica','normal');doc.setFontSize(8.5);doc.setTextColor(50,50,50);
+    doc.text(`Dosis: ${med.dosis}   ·   Frecuencia: ${med.frecuencia}   ·   Duración: ${med.duracion}   ·   Vía: ${med.via}`,14,y+10);
+    y+=h2+1;
   });
   if(formula.indicaciones){
-    y+=4;doc.setFillColor(...amarillo);doc.rect(10,y,190,8,'F');
-    doc.setTextColor(124,92,0);doc.setFont('helvetica','bold');doc.setFontSize(10);doc.text('INDICACIONES GENERALES',14,y+6);
-    y+=12;doc.setFont('helvetica','normal');doc.setFontSize(9);doc.setTextColor(42,42,42);
-    const lines=doc.splitTextToSize(formula.indicaciones,182);doc.text(lines,14,y);y+=lines.length*5+6;
+    y+=3;
+    y=pdfSectionLabel(doc,'OBSERVACIONES E INDICACIONES',y,amarillo);
+    y=pdfSectionBody(doc,formula.indicaciones,y,amarillo);
   }
-  const firmY=Math.max(y+10,248);
-  doc.setDrawColor(...verde);doc.line(120,firmY,200,firmY);
-  doc.setFont('helvetica','normal');doc.setFontSize(9);doc.setTextColor(100,100,100);
-  doc.text(formula.medico||'Médico Veterinario',160,firmY+6,{align:'center'});
-  doc.text('Firma y sello',160,firmY+12,{align:'center'});
-  doc.setFillColor(...rosa);doc.rect(0,284,210,13,'F');
-  doc.setTextColor(139,34,82);doc.setFontSize(8);doc.setFont('helvetica','italic');
-  doc.text('AMAVET CRG — Documento de uso exclusivo veterinario.',105,291,{align:'center'});
+  pdfFirma(doc,y+10);
   doc.save(`formula_${paciente.nombre}_${formula.fecha||'sin-fecha'}.pdf`);
 }
 
@@ -1333,6 +1422,77 @@ function exportarAgendaExcel(){
   const a2=document.createElement('a');a2.href=url;
   a2.download=`AMAVET_agenda_${new Date().toISOString().substring(0,10)}.csv`;
   a2.click();URL.revokeObjectURL(url);
+}
+
+
+function generarRemision(){
+  const pid=parseInt(document.getElementById('r-paciente').value);
+  if(!pid){alert('Selecciona un paciente');return;}
+  const p=pacientes.find(x=>x.id===pid);
+  if(!p)return;
+  const {jsPDF}=window.jspdf;const doc=new jsPDF();
+  const verde=[168,218,181];const azul=[180,215,240];const amarillo=[250,230,140];const rosa2=[240,198,210];
+  const fecha=document.getElementById('r-fecha').value;
+  const destino=document.getElementById('r-destino').value;
+  const especialidad=document.getElementById('r-especialidad').value;
+  const motivo=document.getElementById('r-motivo').value;
+  const dx=document.getElementById('r-diagnostico').value;
+  const historia=document.getElementById('r-historia').value;
+  const meds=document.getElementById('r-meds').value;
+  const examenes2=document.getElementById('r-examenes').value;
+  const solicitud=document.getElementById('r-solicitud').value;
+  const obs=document.getElementById('r-obs').value;
+
+  pdfHeader(doc,'Remisión Veterinaria','Referencia a especialista / clínica');
+
+  let y=pdfDatosBox(doc,[
+    `Paciente: ${p.nombre}   Especie: ${p.especie||''}   Raza: ${p.raza||''}   Edad: ${p.edad||''}`,
+    `Propietario: ${p.dueno||''}   Tel: ${p.tel||''}   Email: ${p.email||''}`,
+    `Fecha remisión: ${fecha||''}`,
+  ],37);
+
+  // Destino
+  y=pdfSectionLabel(doc,'REMITIDO A',y,azul);
+  y=pdfSectionBody(doc,`${destino||''}${especialidad?' — Servicio: '+especialidad:''}`,y,azul);
+
+  // Motivo
+  if(motivo){y=pdfSectionLabel(doc,'MOTIVO DE REMISIÓN',y,rosa2);y=pdfSectionBody(doc,motivo,y,rosa2);}
+
+  // Diagnóstico presuntivo
+  if(dx){y=pdfSectionLabel(doc,'DIAGNÓSTICO PRESUNTIVO',y,amarillo);y=pdfSectionBody(doc,dx,y,amarillo);}
+
+  // Historia clínica resumida
+  if(historia){
+    if(y>220){doc.addPage();y=20;}
+    y=pdfSectionLabel(doc,'HISTORIA CLÍNICA RESUMIDA',y,verde);
+    y=pdfSectionBody(doc,historia,y,verde);
+  }
+
+  // Medicamentos actuales
+  if(meds){
+    if(y>220){doc.addPage();y=20;}
+    y=pdfSectionLabel(doc,'MEDICAMENTOS ACTUALES',y,azul);
+    y=pdfSectionBody(doc,meds,y,azul);
+  }
+
+  // Exámenes
+  if(examenes2){y=pdfSectionLabel(doc,'EXÁMENES REALIZADOS / ADJUNTOS',y,amarillo);y=pdfSectionBody(doc,examenes2,y,amarillo);}
+
+  // Solicitud
+  if(solicitud){
+    if(y>220){doc.addPage();y=20;}
+    y=pdfSectionLabel(doc,'SOLICITUD AL ESPECIALISTA',y,rosa2);
+    y=pdfSectionBody(doc,solicitud,y,rosa2);
+  }
+
+  // Observaciones
+  if(obs){y=pdfSectionLabel(doc,'OBSERVACIONES',y,verde);y=pdfSectionBody(doc,obs,y,verde);}
+
+  pdfFirma(doc,y+10);
+  doc.save(`remision_${p.nombre}_${fecha||'sin-fecha'}.pdf`);
+  togglePanel('panel-remision');
+  // clear fields
+  ['r-destino','r-especialidad','r-motivo','r-diagnostico','r-historia','r-meds','r-examenes','r-solicitud','r-obs'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
 }
 
 init();
