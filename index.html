@@ -720,7 +720,7 @@ function renderHistorias(){
   const countEl=document.getElementById('h-filtro-count');
   if(countEl){
     if(filtro){
-      const p=pacientes.find(x=>x.id==filtro);
+      const p=pacientes.find(x=>Number(x.id)===Number(filtro));
       countEl.textContent=`${filtradas.length} consulta${filtradas.length!==1?'s':''} de ${p?p.nombre:''}`;
     } else {
       countEl.textContent=historias.length?`${historias.length} consulta${historias.length!==1?'s':''} en total`:'';
@@ -731,7 +731,7 @@ function renderHistorias(){
     return;
   }
   c.innerHTML=filtradas.map(h=>{
-    const p=pacientes.find(x=>x.id===h.paciente_id);
+    const p=pacientes.find(x=>Number(x.id)===Number(h.paciente_id));
     const fd=h.fecha?(h.fecha.replace('T',' ').substring(0,16)):'-';
     const ico=p?EMOJIS[p.especie]||'🐾':'🐾';
     return `<div class="historia-item">
@@ -823,7 +823,7 @@ function pdfFirma(doc,y){
 
 function generarPDFHistoria(hid){
   const h=historias.find(x=>x.id===hid);if(!h)return;
-  const p=pacientes.find(x=>x.id===h.paciente_id);
+  const p=pacientes.find(x=>Number(x.id)===Number(h.paciente_id));
   const {jsPDF}=window.jspdf;const doc=new jsPDF();
   const verde=[168,218,181];const azul=[180,215,240];const amarillo=[250,230,140];const rosa2=[240,198,210];
   pdfHeader(doc,'Historia Clínica','Veterinaria');
@@ -884,7 +884,7 @@ async function guardarEdicion(){
 
 function wpHistoria(hid){
   const h=historias.find(x=>x.id===hid);if(!h)return;
-  const p=pacientes.find(x=>x.id===h.paciente_id);if(!p)return;
+  const p=pacientes.find(x=>Number(x.id)===Number(h.paciente_id));if(!p)return;
   const tel='57'+(p.tel||'').replace(/\D/g,'');
   let msg=`Hola ${p.dueno||''}, le informamos sobre la consulta de *${p.nombre}* del ${(h.fecha||'').substring(0,10)}.\n\n`;
   if(h.motivo)msg+=`*Motivo:* ${h.motivo}\n`;
@@ -960,9 +960,9 @@ function renderExamenes(){
   if(!filtrados.length){c.innerHTML=`<div class="empty-state"><div class="empty-icon">🔬</div><div>No hay exámenes almacenados</div></div>`;return;}
   // Group by patient
   const byPaciente={};
-  filtrados.forEach(ex=>{const k=ex.paciente_id||0;if(!byPaciente[k])byPaciente[k]=[];byPaciente[k].push(ex);});
+  filtrados.forEach(ex=>{const k=Number(ex.paciente_id)||0;if(!byPaciente[k])byPaciente[k]=[];byPaciente[k].push(ex);});
   c.innerHTML=Object.entries(byPaciente).map(([pid,exList])=>{
-    const p=pacientes.find(x=>x.id==pid);
+    const p=pacientes.find(x=>Number(x.id)===Number(pid));
     return `<div style="margin-bottom:20px;">
       <div style="font-family:'Playfair Display',serif;font-size:15px;font-weight:500;margin-bottom:8px;display:flex;align-items:center;gap:6px;">${p?EMOJIS[p.especie]||'🐾':'🐾'} ${p?p.nombre:'Paciente desconocido'}</div>
       ${exList.map(ex=>examenCard(ex,p)).join('')}
@@ -971,7 +971,7 @@ function renderExamenes(){
 }
 
 function examenCard(ex,p){
-  const tel=p?'57'+(p.tel||'').replace(/\D/g,''):'';
+  const tel=p?'57'+(p.tel||'').replace(/[^0-9]/g,''):'';
   const wpMsg=`Hola ${p?p.dueno:''}! Le enviamos el resultado del examen *${ex.tipo}* de *${p?p.nombre:''}* con fecha ${ex.fecha||''}. ${ex.notas||''} 🐾`;
   const wpUrl=`https://wa.me/${tel}?text=${encodeURIComponent(wpMsg)}`;
   return `<div class="exam-card">
@@ -1083,9 +1083,9 @@ function renderFormulas(){
   const c=document.getElementById('lista-formulas');
   if(!formulas.length){c.innerHTML=`<div class="empty-state"><div class="empty-icon">💊</div><div>No hay fórmulas médicas aún</div></div>`;return;}
   c.innerHTML='<h2 style="font-family:Playfair Display,serif;font-size:17px;font-weight:500;margin:0 0 10px;">Historial de fórmulas</h2>'+formulas.map(f=>{
-    const p=pacientes.find(x=>x.id===f.paciente_id);
+    const p=pacientes.find(x=>Number(x.id)===Number(f.paciente_id));
     const meds=JSON.parse(f.medicamentos||'[]');
-    const tel=p?'57'+(p.tel||'').replace(/\D/g,''):'';
+    const tel=p?'57'+(p.tel||'').replace(/[^0-9]/g,''):'';
     const msg=`Hola ${p?p.dueno:''}! Adjuntamos la fórmula médica de *${p?p.nombre:''}*. Siga las indicaciones del veterinario. 🐾`;
     return `<div class="formula-item">
       <div class="formula-top">
@@ -1101,7 +1101,7 @@ function renderFormulas(){
   }).join('');
 }
 
-function regenerarPDF(fid){const f=formulas.find(x=>x.id===fid);const p=pacientes.find(x=>x.id===f.paciente_id);if(f&&p)generarPDFFormula(f,p);}
+function regenerarPDF(fid){const f=formulas.find(x=>x.id===fid);const p=pacientes.find(x=>Number(x.id)===Number(f.paciente_id));if(f&&p)generarPDFFormula(f,p);}
 
 async function eliminarFormula(fid){
   if(!confirm('¿Eliminar esta fórmula?'))return;
