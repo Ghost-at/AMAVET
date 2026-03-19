@@ -155,6 +155,19 @@ body{font-family:'DM Sans',sans-serif;background:var(--cream);color:var(--text);
 .formula-actions{display:flex;gap:6px;align-items:center;flex-wrap:wrap;}
 
 /* EXAM CARDS */
+
+/* AGENDA */
+.agenda-item{background:var(--white);border:1px solid var(--border);border-radius:var(--radius);padding:14px 16px;margin-bottom:10px;border-left:4px solid var(--mint-mid);display:flex;align-items:flex-start;gap:14px;transition:all 0.15s;}
+.agenda-item:hover{box-shadow:var(--shadow);}
+.agenda-fecha-box{background:var(--mint);border-radius:var(--radius-sm);padding:8px 10px;text-align:center;min-width:52px;flex-shrink:0;}
+.agenda-dia{font-family:'Playfair Display',serif;font-size:22px;font-weight:600;color:var(--mint-text);line-height:1;}
+.agenda-mes{font-size:10px;font-weight:500;color:var(--mint-text);text-transform:uppercase;letter-spacing:0.06em;}
+.agenda-hora{font-size:11px;color:var(--mint-text);font-weight:500;margin-top:2px;}
+.agenda-info{flex:1;min-width:0;}
+.agenda-nombre{font-family:'Playfair Display',serif;font-size:15px;font-weight:500;color:var(--text);}
+.agenda-sub{font-size:12px;color:var(--text-muted);margin-top:2px;}
+.agenda-actions{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px;}
+
 .exam-card{background:var(--white);border:1px solid var(--border);border-radius:var(--radius);padding:14px 16px;margin-bottom:10px;border-left:4px solid var(--lemon-mid);}
 .exam-actions{display:flex;gap:6px;flex-wrap:wrap;margin-top:10px;}
 
@@ -243,51 +256,57 @@ body{font-family:'DM Sans',sans-serif;background:var(--cream);color:var(--text);
     </div>
 
     <!-- HISTORIAS -->
-    <div id="view-historias" class="view">
+    <div id="view-agenda" class="view">
       <div class="section-header">
-        <h1 class="page-title">Historias clínicas</h1>
-        <button class="btn btn-rose" onclick="togglePanel('panel-historia')">+ Nueva consulta</button>
-      </div>
-      <!-- Filtro por paciente -->
-      <div class="card" style="padding:12px 16px;margin-bottom:14px;">
-        <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
-          <label style="font-size:12px;color:var(--text-muted);white-space:nowrap;flex-shrink:0;">Filtrar por paciente:</label>
-          <select id="h-filtro-paciente" style="flex:1;min-width:160px;font-family:'DM Sans',sans-serif;font-size:13px;padding:8px 12px;border:1.5px solid var(--border);border-radius:var(--radius-sm);background:var(--cream);color:var(--text);outline:none;" onchange="renderHistorias()">
-            <option value="">Todos los pacientes</option>
-          </select>
-          <span id="h-filtro-count" style="font-size:12px;color:var(--text-muted);white-space:nowrap;"></span>
+        <h1 class="page-title">Agenda</h1>
+        <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+          <button class="btn btn-mint btn-sm" onclick="exportarAgendaExcel()">⬇️ Excel</button>
+          <button class="btn btn-rose" onclick="togglePanel('panel-agenda')">+ Nuevo agendamiento</button>
         </div>
       </div>
-      <div id="panel-historia" class="form-panel">
+      <!-- Formulario nuevo agendamiento -->
+      <div id="panel-agenda" class="form-panel">
         <div class="card">
-          <div class="card-title">Nueva consulta</div>
+          <div class="card-title">Nuevo agendamiento</div>
           <div class="field-row">
-            <div class="field"><label>Paciente</label><select id="h-paciente"><option value="">Seleccionar...</option></select></div>
-            <div class="field"><label>Motivo</label>
-              <select id="h-motivo"><option>Consulta general</option><option>Vacunación</option><option>Desparasitación</option><option>Control de peso</option><option>Urgencia</option><option>Cirugía</option><option>Seguimiento</option><option>Otro</option></select>
+            <div class="field"><label>Nombre del paciente</label><input id="ag-paciente" placeholder="Nombre del animal"/></div>
+            <div class="field"><label>Especie</label>
+              <select id="ag-especie">
+                <option value="Canino">🐶 Canino</option>
+                <option value="Felino">🐱 Felino</option>
+                <option value="Ave">🐦 Ave</option>
+                <option value="Otro">🐾 Otro</option>
+              </select>
             </div>
           </div>
-          <div class="field"><label>Fecha consulta</label><input id="h-fecha" type="datetime-local"/></div>
-          <div class="soap-grid">
-            <div class="field"><div class="mic-wrap"><label class="soap-label">S: Subjetivo (Anamnesis)</label><button class="mic-btn" id="mic-btn-s" onclick="toggleMic('h-subjetivo','mic-btn-s','mic-status-s')">🎙️</button></div><textarea id="h-subjetivo" placeholder="Síntomas referidos por el propietario..."></textarea><div class="mic-status" id="mic-status-s">🔴 Escuchando...</div></div>
-            <div class="field"><div class="mic-wrap"><label class="soap-label">O: Objetivo (Detalles del examen)</label><button class="mic-btn" id="mic-btn-o" onclick="toggleMic('h-objetivo','mic-btn-o','mic-status-o')">🎙️</button></div><textarea id="h-objetivo" placeholder="Detalles del examen físico..."></textarea><div class="mic-status" id="mic-status-o">🔴 Escuchando...</div></div>
-            <div class="field soap-full"><div class="mic-wrap"><label class="soap-label">I: Interpretación (Diagnóstico presuntivo/final)</label><button class="mic-btn" id="mic-btn-i" onclick="toggleMic('h-interpretacion','mic-btn-i','mic-status-i')">🎙️</button></div><textarea id="h-interpretacion" placeholder="Diagnóstico presuntivo, diferencial y final..."></textarea><div class="mic-status" id="mic-status-i">🔴 Escuchando...</div></div>
-            <div class="field"><div class="mic-wrap"><label class="soap-label">P: Plan terapéutico</label><button class="mic-btn" id="mic-btn-pt" onclick="toggleMic('h-plan-terapeutico','mic-btn-pt','mic-status-pt')">🎙️</button></div><textarea id="h-plan-terapeutico" placeholder="Tratamiento..."></textarea><div class="mic-status" id="mic-status-pt">🔴 Escuchando...</div></div>
-            <div class="field"><div class="mic-wrap"><label class="soap-label">P: Plan diagnóstico</label><button class="mic-btn" id="mic-btn-pd" onclick="toggleMic('h-plan-diagnostico','mic-btn-pd','mic-status-pd')">🎙️</button></div><textarea id="h-plan-diagnostico" placeholder="Plan diagnóstico..."></textarea><div class="mic-status" id="mic-status-pd">🔴 Escuchando...</div></div>
+          <div class="field-row">
+            <div class="field"><label>Nombre del propietario</label><input id="ag-propietario" placeholder="Nombre completo"/></div>
+            <div class="field"><label>Número de celular</label><input id="ag-cel" placeholder="300 000 0000" type="tel"/></div>
           </div>
-          <div class="field"><label>Próxima cita</label><input id="h-proxima" type="date"/></div>
+          <div class="field-row">
+            <div class="field"><label>Fecha</label><input id="ag-fecha" type="date"/></div>
+            <div class="field"><label>Hora</label><input id="ag-hora" type="time"/></div>
+          </div>
+          <div class="field"><label>Motivo (opcional)</label><input id="ag-motivo" placeholder="Vacunación, revisión, urgencia..."/></div>
           <div class="btn-row">
-            <button class="btn btn-rose" onclick="guardarHistoria()">Guardar</button>
-            <button class="btn btn-lemon" onclick="prepararWP()">📱 WP</button>
-            <button class="btn" onclick="togglePanel('panel-historia')">Cancelar</button>
+            <button class="btn btn-rose" onclick="guardarAgenda()">Guardar</button>
+            <button class="btn" onclick="togglePanel('panel-agenda')">Cancelar</button>
           </div>
-          <div id="wp-msg" style="display:none;"></div>
         </div>
       </div>
-      <div id="lista-historias"></div>
+      <!-- Filtro por fecha -->
+      <div class="card" style="padding:12px 16px;margin-bottom:14px;">
+        <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+          <label style="font-size:12px;color:var(--text-muted);white-space:nowrap;flex-shrink:0;">Filtrar por fecha:</label>
+          <input type="date" id="ag-filtro-fecha" style="font-family:'DM Sans',sans-serif;font-size:13px;padding:7px 10px;border:1.5px solid var(--border);border-radius:var(--radius-sm);background:var(--cream);color:var(--text);outline:none;" onchange="renderAgenda()"/>
+          <button class="btn btn-sm" onclick="document.getElementById('ag-filtro-fecha').value='';renderAgenda()">Ver todos</button>
+          <span id="ag-count" style="font-size:12px;color:var(--text-muted);"></span>
+        </div>
+      </div>
+      <div id="lista-agenda"></div>
     </div>
 
-    <!-- EXAMENES -->
+        <!-- EXAMENES -->
     <div id="view-examenes" class="view">
       <div class="section-header">
         <h1 class="page-title">Exámenes</h1>
@@ -511,6 +530,7 @@ async function init(){
     movimientos=m.data||[];inventario=i.data||[];formulas=f.data||[];
     setCloud('ok','✓ conectado');
   }catch(err){setCloud('err','sin conexión');}
+  await initAgenda();
   renderPacientes();
   const now=new Date();const pad=n=>String(n).padStart(2,'0');
   const todayISO=`${now.getFullYear()}-${pad(now.getMonth()+1)}-${pad(now.getDate())}`;
@@ -527,11 +547,12 @@ function showView(v,btn,color){
   document.getElementById('view-'+v).classList.add('active');
   if(btn)btn.className=`nav-item active-${color==='mint'?'mint':color==='yellow'?'yellow':'pink'}`;
   if(v==='historias'){syncSelects();renderHistorias();}
+  if(v==='agenda'){renderAgenda();}
   if(v==='examenes'){syncSelects();syncExamenFiltro();renderExamenes();}
   if(v==='formulas'){syncSelects();renderFormulas();}
   if(v==='contable')actualizarContable();
   if(v==='inventario')renderInventario();
-  if(v==='pacientes')renderPacientes();
+  if(v==='pacientes'){renderPacientes();syncSelects();renderHistorias();}
 }
 
 function setBNav(activeId,color){
@@ -1160,6 +1181,115 @@ async function eliminarPaciente(){
 }
 
 function cerrarModalPaciente(){document.getElementById('modal-paciente').style.display='none';}
+
+
+// ── AGENDA ──
+let agenda=[];
+
+async function initAgenda(){
+  try{
+    const r=await sb.from('agenda').select('*').order('fecha',{ascending:true}).order('hora',{ascending:true});
+    agenda=r.data||[];
+  }catch(e){agenda=[];}
+}
+
+async function guardarAgenda(){
+  const row={
+    id:Date.now(),
+    paciente:document.getElementById('ag-paciente').value,
+    especie:document.getElementById('ag-especie').value,
+    propietario:document.getElementById('ag-propietario').value,
+    celular:document.getElementById('ag-cel').value,
+    fecha:document.getElementById('ag-fecha').value,
+    hora:document.getElementById('ag-hora').value,
+    motivo:document.getElementById('ag-motivo').value
+  };
+  if(!row.paciente||!row.fecha||!row.hora){alert('Completa paciente, fecha y hora');return;}
+  setCloud('saving','guardando...');
+  const {error}=await sb.from('agenda').insert(row);
+  if(error){setCloud('err','error');alert(error.message);return;}
+  agenda.push(row);
+  agenda.sort((a,b)=>a.fecha.localeCompare(b.fecha)||a.hora.localeCompare(b.hora));
+  setCloud('ok','✓ guardado');
+  ['ag-paciente','ag-cel','ag-propietario','ag-motivo','ag-hora'].forEach(id=>document.getElementById(id).value='');
+  togglePanel('panel-agenda');renderAgenda();
+}
+
+function renderAgenda(){
+  const c=document.getElementById('lista-agenda');if(!c)return;
+  const filtroFecha=document.getElementById('ag-filtro-fecha')?.value||'';
+  const filtrados=filtroFecha?agenda.filter(a=>a.fecha===filtroFecha):agenda;
+  const countEl=document.getElementById('ag-count');
+  if(countEl)countEl.textContent=filtrados.length?`${filtrados.length} agendamiento${filtrados.length!==1?'s':''}` :'';
+  if(!filtrados.length){
+    c.innerHTML=`<div class="empty-state"><div class="empty-icon">📅</div><div>${filtroFecha?'Sin agendamientos para esta fecha':'No hay agendamientos aún'}</div></div>`;
+    return;
+  }
+  const MESES=['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
+  c.innerHTML=filtrados.map(a=>{
+    const esp=a.especie==='Canino'?'🐶':a.especie==='Felino'?'🐱':a.especie==='Ave'?'🐦':'🐾';
+    let dia='--',mes='---';
+    if(a.fecha){const d=new Date(a.fecha+'T12:00:00');dia=d.getDate();mes=MESES[d.getMonth()];}
+    const hora12=a.hora?formatHora12(a.hora):'';
+    return `<div class="agenda-item">
+      <div class="agenda-fecha-box">
+        <div class="agenda-dia">${dia}</div>
+        <div class="agenda-mes">${mes}</div>
+        ${hora12?`<div class="agenda-hora">${hora12}</div>`:''}
+      </div>
+      <div class="agenda-info">
+        <div class="agenda-nombre">${esp} ${a.paciente}</div>
+        <div class="agenda-sub">👤 ${a.propietario||''} · 📞 ${a.celular||''}</div>
+        ${a.motivo?`<div class="agenda-sub">📋 ${a.motivo}</div>`:''}
+        <div class="agenda-actions">
+          <button class="btn btn-sm btn-lemon" onclick="wpAgenda(${a.id})">📱 WP</button>
+          <button class="btn btn-sm" style="color:var(--rose-text);border-color:var(--rose-mid);" onclick="eliminarAgenda(${a.id})">🗑</button>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function formatHora12(h){
+  const [hh,mm]=h.split(':');
+  const n=parseInt(hh);
+  const ampm=n>=12?'PM':'AM';
+  const h12=n%12||12;
+  return `${h12}:${mm} ${ampm}`;
+}
+
+function wpAgenda(aid){
+  const a=agenda.find(x=>x.id===aid);if(!a)return;
+  const tel='57'+(a.celular||'').replace(/\D/g,'');
+  const esp=a.especie==='Canino'?'🐶':a.especie==='Felino'?'🐱':'🐾';
+  const msg=`Hola ${a.propietario||''}! Le recordamos que tiene una cita para *${a.paciente}* ${esp} el *${a.fecha}* a las *${formatHora12(a.hora)}*.${a.motivo?' Motivo: '+a.motivo:''} \n\nAMAVET CRG 🐾`;
+  window.open(`https://wa.me/${tel}?text=${encodeURIComponent(msg)}`,'_blank');
+}
+
+async function eliminarAgenda(aid){
+  if(!confirm('¿Eliminar este agendamiento?'))return;
+  await sb.from('agenda').delete().eq('id',aid);
+  agenda=agenda.filter(x=>x.id!==aid);renderAgenda();
+}
+
+function exportarAgendaExcel(){
+  if(!agenda.length){alert('No hay agendamientos para exportar');return;}
+  const MESES=['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+  const rows=[
+    ['AMAVET CRG — Histórico de Agenda'],
+    [`Exportado: ${new Date().toLocaleDateString('es-CO')}`],
+    [],
+    ['Fecha','Hora','Paciente','Especie','Propietario','Celular','Motivo'],
+    ...agenda.map(a=>[a.fecha||'',a.hora?formatHora12(a.hora):'',a.paciente||'',a.especie||'',a.propietario||'',a.celular||'',a.motivo||''])
+  ];
+  let csv='';
+  rows.forEach(r=>{csv+=r.map(v=>String(v).includes(',')? `"${v}"`:v).join(',')+'\'+'n';});
+  const blob=new Blob(['\uFEFF'+csv],{type:'text/csv;charset=utf-8;'});
+  const url=URL.createObjectURL(blob);
+  const a2=document.createElement('a');a2.href=url;
+  a2.download=`AMAVET_agenda_${new Date().toISOString().substring(0,10)}.csv`;
+  a2.click();URL.revokeObjectURL(url);
+}
 
 init();
 </script>
