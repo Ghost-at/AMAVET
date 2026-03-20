@@ -302,6 +302,85 @@ body{font-family:'DM Sans',sans-serif;background:var(--cream);color:var(--text);
         </div>
         <div id="lista-historias"></div>
       </div>
+
+      <!-- FORMULACIÓN dentro de Historias/Pacientes -->
+      <div style="margin-top:28px;">
+        <div class="section-header">
+          <h2 style="font-family:'Playfair Display',serif;font-size:20px;font-weight:500;color:var(--text);">Formulación médica</h2>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;">
+            <button class="btn btn-lemon btn-sm" onclick="togglePanel('panel-remision-h')">📋 Remisión</button>
+            <button class="btn btn-rose" onclick="togglePanel('panel-formula-h')">+ Nueva fórmula</button>
+          </div>
+        </div>
+
+        <!-- PANEL REMISIÓN en Historias -->
+        <div id="panel-remision-h" class="form-panel">
+          <div class="card">
+            <div class="card-title">Nueva remisión a clínica veterinaria</div>
+            <div class="field-row">
+              <div class="field"><label>Paciente</label><select id="rh-paciente"><option value="">Seleccionar...</option></select></div>
+              <div class="field"><label>Fecha</label><input id="rh-fecha" type="date"/></div>
+            </div>
+            <div class="field-row">
+              <div class="field"><label>Remitido a (clínica / especialista)</label><input id="rh-destino" placeholder="Clínica Veterinaria XYZ"/></div>
+              <div class="field"><label>Especialidad / Servicio</label><input id="rh-especialidad" placeholder="Cardiología, Cirugía..."/></div>
+            </div>
+            <div class="field"><label>Motivo de remisión</label><textarea id="rh-motivo" style="min-height:60px;" placeholder="Motivo clínico..."></textarea></div>
+            <div class="field"><label>Diagnóstico presuntivo</label><input id="rh-diagnostico" placeholder="Sospecha diagnóstica"/></div>
+            <div class="field"><label>Historia clínica resumida</label><textarea id="rh-historia" placeholder="Anamnesis, signos clínicos, exámenes..."></textarea></div>
+            <div class="field"><label>Medicamentos actuales</label><textarea id="rh-meds" style="min-height:60px;" placeholder="Medicamentos en curso..."></textarea></div>
+            <div class="field"><label>Exámenes adjuntos</label><input id="rh-examenes" placeholder="Hemograma, radiografías..."/></div>
+            <div class="field"><label>Solicitud al especialista</label><textarea id="rh-solicitud" style="min-height:60px;" placeholder="Qué se solicita..."></textarea></div>
+            <div class="field"><label>Observaciones adicionales</label><input id="rh-obs" placeholder="Urgencia, restricciones..."/></div>
+            <div class="btn-row">
+              <button class="btn btn-lemon" onclick="generarRemisionH()">📄 Generar PDF</button>
+              <button class="btn" onclick="togglePanel('panel-remision-h')">Cancelar</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- PANEL FÓRMULA en Historias -->
+        <div id="panel-formula-h" class="form-panel">
+          <div class="card">
+            <div class="card-title">Nueva fórmula médica</div>
+            <div class="field-row">
+              <div class="field">
+                <label>Paciente</label>
+                <select id="fh-paciente" onchange="togglePacienteManual('fh')">
+                  <option value="">Seleccionar...</option>
+                  <option value="__manual__">— Sin paciente registrado —</option>
+                </select>
+              </div>
+              <div class="field"><label>Fecha</label><input id="fh-fecha" type="date"/></div>
+            </div>
+            <!-- Campos manuales (se muestran si elige "Sin paciente") -->
+            <div id="fh-manual" style="display:none;">
+              <div class="field-row">
+                <div class="field"><label>Nombre del paciente</label><input id="fh-nombre-manual" placeholder="Nombre del animal"/></div>
+                <div class="field"><label>Especie</label><select id="fh-especie-manual"><option>Canino</option><option>Felino</option><option>Ave</option><option>Otro</option></select></div>
+              </div>
+              <div class="field-row">
+                <div class="field"><label>Propietario</label><input id="fh-dueno-manual" placeholder="Nombre propietario"/></div>
+                <div class="field"><label>Cédula</label><input id="fh-cedula-manual" type="tel" placeholder="1234567890"/></div>
+              </div>
+              <div class="field-row">
+                <div class="field"><label>Teléfono</label><input id="fh-tel-manual" placeholder="300 000 0000"/></div>
+                <div class="field"><label>Email</label><input id="fh-email-manual" type="email" placeholder="correo@ejemplo.com"/></div>
+              </div>
+            </div>
+            <div class="field"><label>Diagnóstico</label><input id="fh-diagnostico" placeholder="Diagnóstico principal"/></div>
+            <div class="card-title" style="font-size:14px;margin-top:4px;margin-bottom:10px;">Medicamentos</div>
+            <div id="fh-med-list"></div>
+            <button class="btn btn-sm" onclick="agregarMedicamentoH()" style="margin-bottom:14px;">+ Agregar medicamento</button>
+            <div class="field"><label>Indicaciones generales</label><textarea id="fh-indicaciones" placeholder="Reposo, dieta, cuidados..."></textarea></div>
+            <div class="btn-row">
+              <button class="btn btn-rose" onclick="guardarFormulaH()">Guardar y generar PDF</button>
+              <button class="btn" onclick="togglePanel('panel-formula-h')">Cancelar</button>
+            </div>
+          </div>
+        </div>
+        <div id="lista-formulas-h"></div>
+      </div>
     </div>
 
     <!-- AGENDA -->
@@ -490,7 +569,10 @@ body{font-family:'DM Sans',sans-serif;background:var(--cream);color:var(--text);
     <div id="view-inventario" class="view">
       <div class="section-header">
         <h1 class="page-title">Inventario</h1>
-        <button class="btn btn-lemon" onclick="togglePanel('panel-inventario')">+ Agregar</button>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;">
+          <button class="btn btn-mint btn-sm" onclick="exportarTodosLosDatos()">⬇️ Exportar todo</button>
+          <button class="btn btn-lemon" onclick="togglePanel('panel-inventario')">+ Agregar</button>
+        </div>
       </div>
       <div id="inv-resumen" class="inv-resumen-grid" style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:16px;"></div>
       <div class="card" style="padding:12px 16px;margin-bottom:14px;">
@@ -630,7 +712,10 @@ async function init(){
   document.getElementById('f-fecha').value=todayISO;
   document.getElementById('e-fecha').value=todayISO;
   const rFechaEl=document.getElementById('r-fecha');if(rFechaEl)rFechaEl.value=todayISO;
+  const fhFechaEl=document.getElementById('fh-fecha');if(fhFechaEl)fhFechaEl.value=todayISO;
   agregarMedicamento();
+  agregarMedicamentoH();
+  syncSelects();
 }
 
 function showView(v,btn,color){
@@ -644,7 +729,7 @@ function showView(v,btn,color){
   if(v==='formulas'){syncSelects();renderFormulas();}
   if(v==='contable')actualizarContable();
   if(v==='inventario')renderInventario();
-  if(v==='pacientes'){renderPacientes();syncSelects();renderHistorias();}
+  if(v==='pacientes'){renderPacientes();syncSelects();renderHistorias();renderFormulasH();}
 }
 
 function setBNav(activeId,color){
@@ -656,10 +741,17 @@ function setBNav(activeId,color){
 function togglePanel(id){document.getElementById(id).classList.toggle('open');}
 
 function syncSelects(){
-  ['h-paciente','e-paciente','f-paciente','r-paciente'].forEach(id=>{
+  ['h-paciente','e-paciente','f-paciente','r-paciente','rh-paciente'].forEach(id=>{
     const s=document.getElementById(id);if(!s)return;
     s.innerHTML='<option value="">Seleccionar...</option>'+pacientes.map(p=>`<option value="${p.id}">${EMOJIS[p.especie]||'🐾'} ${p.nombre} — ${p.dueno||''}</option>`).join('');
   });
+  // Populate fh-paciente (keep manual option)
+  const fhp=document.getElementById('fh-paciente');
+  if(fhp){
+    const cur=fhp.value;
+    fhp.innerHTML='<option value="">Seleccionar...</option><option value="__manual__">— Sin paciente registrado —</option>'+pacientes.map(p=>`<option value="${p.id}">${EMOJIS[p.especie]||'🐾'} ${p.nombre} — ${p.dueno||''}</option>`).join('');
+    if(cur)fhp.value=cur;
+  }
   // Also update historia filter
   const hf=document.getElementById('h-filtro-paciente');
   if(hf){
@@ -879,35 +971,40 @@ function generarPDFHistoria(hid){
   const h=historias.find(x=>x.id===hid);if(!h)return;
   const p=pacientes.find(x=>Number(x.id)===Number(h.paciente_id));
   const {jsPDF}=window.jspdf;const doc=new jsPDF();
-  const verde=[168,218,181];const azul=[180,215,240];const amarillo=[250,230,140];const rosa2=[240,198,210];
-  pdfHeader(doc,'Historia Clínica','Veterinaria');
-  // Datos
+  const verde=[45,110,65];const azul=[30,80,160];const naranja=[180,100,20];
+  pdfHeader(doc,'Consulta','Veterinaria');
   const fd=h.fecha?h.fecha.replace('T',' ').substring(0,16):'-';
-  let y=pdfDatosBox(doc,[
-    `Paciente: ${p?p.nombre:'?'}   Especie: ${p?p.especie:''}   Raza: ${p?p.raza||'':''}   Edad: ${p?p.edad||'':''}`,
-    `Propietario: ${p?p.dueno||'':''}   Tel: ${p?p.tel||'':''}   Email: ${p?p.email||'':''}`,
-    `Fecha: ${fd}   Motivo: ${h.motivo||''}`
-  ],37);
-  // SOAP sections
+  let y=pdfDatosBox(doc,p||{},'Consulta',37);
+  // Fecha + motivo
+  doc.setDrawColor(210,210,210);doc.rect(10,y,190,14);
+  doc.setFont('helvetica','bold');doc.setFontSize(8);doc.setTextColor(45,110,65);
+  doc.text('Fecha:',14,y+5);doc.setFont('helvetica','normal');doc.setTextColor(40,40,40);doc.text(fd,30,y+5);
+  doc.setFont('helvetica','bold');doc.setTextColor(45,110,65);doc.text('Motivo:',110,y+5);
+  doc.setFont('helvetica','normal');doc.setTextColor(40,40,40);doc.text(h.motivo||'',128,y+5);
+  y+=18;
+  // Sección Información general
+  doc.setFillColor(248,248,248);doc.rect(10,y,190,7,'F');
+  doc.setFont('helvetica','bold');doc.setFontSize(9);doc.setTextColor(30,30,30);
+  doc.text('Información general',14,y+5);
+  y+=9;
   const secs=[
-    {label:'S: SUBJETIVO (ANAMNESIS)',text:h.subjetivo,color:verde},
-    {label:'O: OBJETIVO (EXAMEN FÍSICO)',text:h.objetivo,color:azul},
-    {label:'I: INTERPRETACIÓN / DIAGNÓSTICO',text:h.interpretacion,color:amarillo},
-    {label:'P: PLAN TERAPÉUTICO',text:h.plan_terapeutico,color:verde},
-    {label:'P: PLAN DIAGNÓSTICO',text:h.plan_diagnostico,color:azul},
+    {label:'Anamnesis:',text:h.subjetivo,col:verde},
+    {label:'Examen:',text:h.objetivo,col:azul},
+    {label:'Diagnóstico:',text:h.interpretacion,col:[150,30,30]},
+    {label:'Plan terapéutico:',text:h.plan_terapeutico,col:naranja},
+    {label:'Plan diagnóstico:',text:h.plan_diagnostico,col:azul},
   ];
   secs.forEach(s=>{
     if(!s.text)return;
-    if(y>255){doc.addPage();y=20;}
-    y=pdfSectionLabel(doc,s.label,y,s.color);
-    y=pdfSectionBody(doc,s.text,y,s.color);
+    if(y>265){doc.addPage();y=20;}
+    y=pdfSectionLabel(doc,s.label,y,s.col);
+    y=pdfSectionBody(doc,s.text,y,null);
   });
   if(h.proxima){
-    if(y>265){doc.addPage();y=20;}
-    y=pdfSectionLabel(doc,`PRÓXIMA CITA: ${h.proxima}`,y,rosa2);y+=2;
+    y=pdfSectionLabel(doc,`Próxima cita: ${h.proxima}`,y,[45,110,65]);y+=2;
   }
   pdfFirma(doc,y+10);
-  doc.save(`historia_${p?p.nombre:'paciente'}_${(h.fecha||'').substring(0,10)}.pdf`);
+  doc.save(`consulta_${p?p.nombre:'paciente'}_${(h.fecha||'').substring(0,10)}.pdf`);
 }
 
 function abrirEdicion(hid){
@@ -1080,54 +1177,62 @@ async function guardarFormula(){
   const pid=parseInt(document.getElementById('f-paciente').value);
   if(!pid){alert('Selecciona un paciente');return;}
   const p=pacientes.find(x=>x.id===pid);
-  const pFormulas=formulas.filter(f=>Number(f.paciente_id)===Number(pid));
-  if(pFormulas.length>=2){alert(`${p.nombre} ya tiene 2 fórmulas. Elimina una antes.`);return;}
   const meds=[];
   for(let i=1;i<=medCount;i++){
     const nom=document.getElementById(`med-nom-${i}`);
     if(nom&&nom.value.trim())meds.push({nombre:nom.value,dosis:document.getElementById(`med-dosis-${i}`).value,frecuencia:document.getElementById(`med-freq-${i}`).value,duracion:document.getElementById(`med-dur-${i}`).value,via:document.getElementById(`med-via-${i}`).value});
   }
   if(!meds.length){alert('Agrega al menos un medicamento');return;}
-  const row={id:Date.now(),paciente_id:Number(pid),fecha:document.getElementById('f-fecha').value,diagnostico:document.getElementById('f-diagnostico').value,medicamentos:JSON.stringify(meds),indicaciones:document.getElementById('f-indicaciones').value,medico:document.getElementById('f-medico').value};
   setCloud('saving','guardando...');
+  // Auto-eliminar más vieja si ya hay 2
+  const pFormulas=formulas.filter(f=>Number(f.paciente_id)===Number(pid)).sort((a,b)=>Number(a.id)-Number(b.id));
+  if(pFormulas.length>=2){
+    const masVieja=pFormulas[0];
+    await sb.from('formulas').delete().eq('id',masVieja.id);
+    formulas=formulas.filter(f=>f.id!==masVieja.id);
+  }
+  const row={id:Date.now(),paciente_id:Number(pid),fecha:document.getElementById('f-fecha').value,diagnostico:document.getElementById('f-diagnostico').value,medicamentos:JSON.stringify(meds),indicaciones:document.getElementById('f-indicaciones').value,medico:document.getElementById('f-medico').value};
   const {error}=await sb.from('formulas').insert(row);
   if(error){setCloud('err','error');alert(error.message);return;}
   formulas.unshift(row);setCloud('ok','✓ guardado');
   generarPDFFormula(row,p);
   document.getElementById('med-list').innerHTML='';medCount=0;agregarMedicamento();
   ['f-diagnostico','f-indicaciones','f-medico'].forEach(id=>document.getElementById(id).value='');
-  togglePanel('panel-formula');renderFormulas();syncSelects();
+  togglePanel('panel-formula');renderFormulas();renderFormulasH();syncSelects();
 }
 
 function generarPDFFormula(formula,paciente){
   const {jsPDF}=window.jspdf;const doc=new jsPDF();
   const meds=JSON.parse(formula.medicamentos||'[]');
-  const verde=[168,218,181];const amarillo=[250,230,140];const rosa2=[240,198,210];
-  pdfHeader(doc,'Fórmula Médica','Reservado al tratamiento de animales');
-  let y=pdfDatosBox(doc,[
-    `Paciente: ${paciente.nombre}   Especie: ${paciente.especie||''}   Raza: ${paciente.raza||''}   Edad: ${paciente.edad||''}`,
-    `Propietario: ${paciente.dueno||''}   Tel: ${paciente.tel||''}   Email: ${paciente.email||''}`,
-    `Fecha: ${formula.fecha||''}   Registro por: Dra. Ana María Jurado Gutiérrez`
-  ],37);
-  // Diagnóstico
-  y=pdfSectionLabel(doc,`DIAGNÓSTICO: ${formula.diagnostico||''}`,y,verde);y+=2;
-  // Medicamentos header
-  y=pdfSectionLabel(doc,'MEDICAMENTOS',y,[200,235,215]);y+=3;
+  const verde=[45,110,65];const naranja=[180,100,20];
+  pdfHeader(doc,'Fórmula médica','Reservado al tratamiento de animales');
+  let y=pdfDatosBox(doc,paciente,'Fórmula médica de',37);
+  // Fecha + Diagnóstico
+  doc.setFont('helvetica','bold');doc.setFontSize(8.5);doc.setTextColor(45,110,65);
+  doc.text('Fecha:',14,y+4);
+  doc.setFont('helvetica','normal');doc.setTextColor(40,40,40);doc.text(formula.fecha||'',28,y+4);
+  y+=9;
+  y=pdfSectionLabel(doc,'Diagnóstico:',y,verde);
+  y=pdfSectionBody(doc,formula.diagnostico||'',y,null);
+  // Medicamentos
+  y=pdfSectionLabel(doc,'Medicamentos:',y,verde);
   meds.forEach((med,i)=>{
     if(y>255){doc.addPage();y=20;}
-    const bg=i%2===0?[235,248,240]:[245,252,247];
-    const h2=14;
-    doc.setFillColor(...bg);doc.rect(10,y,190,h2,'F');
-    doc.setFont('helvetica','bold');doc.setFontSize(9);doc.setTextColor(30,90,55);
-    doc.text(`${i+1}. ${med.nombre}`,14,y+5);
-    doc.setFont('helvetica','normal');doc.setFontSize(8.5);doc.setTextColor(50,50,50);
-    doc.text(`Dosis: ${med.dosis}   ·   Frecuencia: ${med.frecuencia}   ·   Duración: ${med.duracion}   ·   Vía: ${med.via}`,14,y+10);
-    y+=h2+1;
+    doc.setFont('helvetica','bold');doc.setFontSize(8.5);doc.setTextColor(40,40,40);
+    doc.text(`${['I','II','III','IV','V','VI'][i]||i+1}. ${med.nombre}`,14,y+4);
+    y+=7;
+    doc.setFont('helvetica','normal');doc.setFontSize(8);doc.setTextColor(70,70,70);
+    const detalle=`${med.dosis} vía ${med.via} cada ${med.frecuencia} por ${med.duracion}`;
+    const dl=doc.splitTextToSize(detalle,178);
+    dl.forEach(l=>{doc.text(l,18,y+3);y+=4.5;});
+    y+=2;
   });
   if(formula.indicaciones){
+    y+=2;
+    y=pdfSectionLabel(doc,'Observaciones:',y,verde);
+    const obs=doc.splitTextToSize(formula.indicaciones,182);
+    obs.forEach(l=>{if(y>270){doc.addPage();y=20;}doc.setFont('helvetica','normal');doc.setFontSize(8.5);doc.setTextColor(40,40,40);doc.text(l,14,y+3);y+=5;});
     y+=3;
-    y=pdfSectionLabel(doc,'OBSERVACIONES E INDICACIONES',y,amarillo);
-    y=pdfSectionBody(doc,formula.indicaciones,y,amarillo);
   }
   pdfFirma(doc,y+10);
   doc.save(`formula_${paciente.nombre}_${formula.fecha||'sin-fecha'}.pdf`);
@@ -1159,8 +1264,11 @@ function regenerarPDF(fid){const f=formulas.find(x=>x.id===fid);const p=paciente
 
 async function eliminarFormula(fid){
   if(!confirm('¿Eliminar esta fórmula?'))return;
+  setCloud('saving','eliminando...');
   await sb.from('formulas').delete().eq('id',fid);
-  formulas=formulas.filter(f=>f.id!==fid);renderFormulas();
+  formulas=formulas.filter(f=>f.id!==fid);
+  setCloud('ok','✓ eliminado');
+  renderFormulas();renderFormulasH();
 }
 
 // ── CONTABLE ──
@@ -1549,6 +1657,223 @@ function generarRemision(){
   togglePanel('panel-remision');
   // clear fields
   ['r-destino','r-especialidad','r-motivo','r-diagnostico','r-historia','r-meds','r-examenes','r-solicitud','r-obs'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
+}
+
+
+// ── TOGGLE PACIENTE MANUAL ──
+function togglePacienteManual(prefix){
+  const val=document.getElementById(prefix+'-paciente').value;
+  const manual=document.getElementById(prefix+'-manual');
+  if(manual)manual.style.display=val==='__manual__'?'block':'none';
+}
+
+// ── MED COUNT FOR FORMULA-H ──
+let medCountH=0;
+function agregarMedicamentoH(){
+  medCountH++;
+  const div=document.createElement('div');
+  div.id=`fhmed-${medCountH}`;div.style.cssText='background:var(--cream);border-radius:var(--radius-sm);padding:12px;margin-bottom:10px;';
+  div.innerHTML=`<div class="field-row-3">
+    <div class="field" style="margin:0;"><label>Medicamento</label><input id="fhmed-nom-${medCountH}" placeholder="Amoxicilina 500mg"/></div>
+    <div class="field" style="margin:0;"><label>Dosis</label><input id="fhmed-dosis-${medCountH}" placeholder="1 tableta"/></div>
+    <div class="field" style="margin:0;"><label>Frecuencia</label><input id="fhmed-freq-${medCountH}" placeholder="cada 12h"/></div>
+  </div>
+  <div class="field-row" style="margin-top:8px;">
+    <div class="field" style="margin:0;"><label>Duración</label><input id="fhmed-dur-${medCountH}" placeholder="7 días"/></div>
+    <div class="field" style="margin:0;"><label>Vía</label><select id="fhmed-via-${medCountH}"><option>Oral</option><option>Inyectable</option><option>Tópica</option><option>Oftálmica</option><option>Ótica</option><option>Otra</option></select></div>
+  </div>`;
+  document.getElementById('fh-med-list').appendChild(div);
+}
+
+// ── GUARDAR FÓRMULA H (con o sin paciente registrado) ──
+async function guardarFormulaH(){
+  const pid=document.getElementById('fh-paciente').value;
+  const esManual=pid==='__manual__';
+  if(!pid){alert('Selecciona un paciente o elige "Sin paciente registrado"');return;}
+  // Construir objeto paciente
+  let pacienteObj;
+  if(esManual){
+    pacienteObj={
+      id:null,
+      nombre:document.getElementById('fh-nombre-manual').value||'Paciente',
+      especie:document.getElementById('fh-especie-manual').value,
+      dueno:document.getElementById('fh-dueno-manual').value,
+      cedula:document.getElementById('fh-cedula-manual').value,
+      tel:document.getElementById('fh-tel-manual').value,
+      email:document.getElementById('fh-email-manual').value,
+      raza:'',edad:''
+    };
+    if(!pacienteObj.nombre){alert('Ingresa el nombre del paciente');return;}
+  } else {
+    pacienteObj=pacientes.find(x=>Number(x.id)===Number(pid));
+    if(!pacienteObj){alert('Paciente no encontrado');return;}
+    // Auto-eliminar más vieja si ya hay 2
+    const pFormulas=formulas.filter(f=>Number(f.paciente_id)===Number(pid)).sort((a,b)=>Number(a.id)-Number(b.id));
+    if(pFormulas.length>=2){
+      const masVieja=pFormulas[0];
+      await sb.from('formulas').delete().eq('id',masVieja.id);
+      formulas=formulas.filter(f=>f.id!==masVieja.id);
+    }
+  }
+  // Recoger medicamentos
+  const meds=[];
+  for(let i=1;i<=medCountH;i++){
+    const nom=document.getElementById(`fhmed-nom-${i}`);
+    if(nom&&nom.value.trim())meds.push({
+      nombre:nom.value,
+      dosis:document.getElementById(`fhmed-dosis-${i}`).value,
+      frecuencia:document.getElementById(`fhmed-freq-${i}`).value,
+      duracion:document.getElementById(`fhmed-dur-${i}`).value,
+      via:document.getElementById(`fhmed-via-${i}`).value
+    });
+  }
+  if(!meds.length){alert('Agrega al menos un medicamento');return;}
+  const row={
+    id:Date.now(),
+    paciente_id:esManual?null:Number(pid),
+    fecha:document.getElementById('fh-fecha').value,
+    diagnostico:document.getElementById('fh-diagnostico').value,
+    medicamentos:JSON.stringify(meds),
+    indicaciones:document.getElementById('fh-indicaciones').value,
+    medico:'Dra. Ana María Jurado Gutiérrez'
+  };
+  setCloud('saving','guardando...');
+  // Solo guardar en DB si tiene paciente registrado
+  if(!esManual){
+    const {error}=await sb.from('formulas').insert(row);
+    if(error){setCloud('err','error');alert(error.message);return;}
+    formulas.unshift(row);
+  }
+  setCloud('ok','✓ guardado');
+  generarPDFFormula(row,pacienteObj);
+  document.getElementById('fh-med-list').innerHTML='';medCountH=0;agregarMedicamentoH();
+  ['fh-diagnostico','fh-indicaciones','fh-nombre-manual','fh-dueno-manual','fh-cedula-manual','fh-tel-manual','fh-email-manual'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
+  document.getElementById('fh-paciente').value='';
+  document.getElementById('fh-manual').style.display='none';
+  togglePanel('panel-formula-h');renderFormulasH();
+}
+
+// ── RENDER FORMULAS-H ──
+function renderFormulasH(){
+  const c=document.getElementById('lista-formulas-h');if(!c)return;
+  if(!formulas.length){c.innerHTML='<div class="empty-state"><div class="empty-icon">💊</div><div>No hay fórmulas guardadas</div></div>';return;}
+  // Group by patient, show max 2 per patient
+  const byPac={};
+  formulas.forEach(f=>{
+    const key=f.paciente_id||'__sin__';
+    if(!byPac[key])byPac[key]=[];
+    byPac[key].push(f);
+  });
+  // Sort each group newest first, cap at 2
+  Object.keys(byPac).forEach(k=>{
+    byPac[k].sort((a,b)=>Number(b.id)-Number(a.id));
+    byPac[k]=byPac[k].slice(0,2);
+  });
+  const allVisible=Object.values(byPac).flat();
+  c.innerHTML=allVisible.map(f=>{
+    const p=pacientes.find(x=>Number(x.id)===Number(f.paciente_id));
+    const meds=JSON.parse(f.medicamentos||'[]');
+    const tel=p?'57'+(p.tel||'').replace(/[^0-9]/g,''):'';
+    const msg=`Hola ${p?p.dueno:''}! Adjuntamos la fórmula médica de *${p?p.nombre:''}*. Siga las indicaciones del veterinario. 🐾`;
+    const pCount=byPac[f.paciente_id||'__sin__']?.length||0;
+    const badgeColor=pCount>=2?'badge-rose':'badge-mint';
+    return `<div class="formula-item">
+      <div class="formula-top">
+        <div>
+          <div class="formula-nombre">${p?`${EMOJIS[p.especie]||'🐾'} ${p.nombre}`:'🐾 Sin paciente registrado'}</div>
+          <div class="historia-fecha">${f.fecha||''} · ${f.diagnostico||''}</div>
+        </div>
+        <div style="display:flex;flex-direction:column;align-items:flex-end;gap:5px;">
+          <span class="badge ${badgeColor}" style="font-size:10px;">${pCount}/2 fórmulas</span>
+          <div class="formula-actions">
+            ${tel?`<a href="https://wa.me/${tel}?text=${encodeURIComponent(msg)}" target="_blank" class="btn btn-sm btn-mint" style="text-decoration:none;">📱 WP</a>`:''}
+            <button class="btn btn-sm btn-lemon" onclick="regenerarPDF(${f.id})">⬇️ PDF</button>
+            <button class="btn btn-sm btn-rose" onclick="eliminarFormula(${f.id})">🗑 Eliminar</button>
+          </div>
+        </div>
+      </div>
+      <div class="historia-tags">${meds.map(m=>`<span class="badge badge-lemon">${m.nombre}</span>`).join('')}</div>
+    </div>`;
+  }).join('');
+}
+
+// ── GENERARREMISION DESDE HISTORIAS ──
+function generarRemisionH(){
+  // Remap IDs from rh- to r- and call generarRemision
+  const mapeo={'r-paciente':'rh-paciente','r-fecha':'rh-fecha','r-destino':'rh-destino','r-especialidad':'rh-especialidad','r-motivo':'rh-motivo','r-diagnostico':'rh-diagnostico','r-historia':'rh-historia','r-meds':'rh-meds','r-examenes':'rh-examenes','r-solicitud':'rh-solicitud','r-obs':'rh-obs'};
+  // Temporarily copy values to r- fields
+  Object.entries(mapeo).forEach(([rid,rhid])=>{
+    const src=document.getElementById(rhid);const dst=document.getElementById(rid);
+    if(src&&dst)dst.value=src.value;
+  });
+  generarRemision();
+  // Clear rh fields
+  Object.values(mapeo).forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
+  togglePanel('panel-remision-h');
+}
+
+// ── EXPORTAR TODOS LOS DATOS CSV ──
+function exportarTodosLosDatos(){
+  const rows=[];
+  const sep=',';
+  const nl=String.fromCharCode(10);
+
+  const esc=v=>String(v||'').includes(',')||String(v||'').includes('"')||String(v||'').includes(nl)?`"${String(v||'').replace(/"/g,'""')}"`:String(v||'');
+  const row=(...cols)=>cols.map(esc).join(sep)+nl;
+
+  rows.push('AMAVET CRG — Exportación completa de datos'+nl);
+  rows.push('Fecha: '+new Date().toLocaleDateString('es-CO')+nl);
+  rows.push(nl);
+
+  // PACIENTES
+  rows.push('=== PACIENTES ==='+nl);
+  rows.push(row('ID','Nombre','Especie','Raza','Edad','Propietario','Cédula','Teléfono','Email'));
+  pacientes.forEach(p=>rows.push(row(p.id,p.nombre,p.especie,p.raza,p.edad,p.dueno,p.cedula,p.tel,p.email)));
+  rows.push(nl);
+
+  // HISTORIAS
+  rows.push('=== HISTORIAS CLÍNICAS ==='+nl);
+  rows.push(row('ID','Paciente','Fecha','Motivo','Subjetivo','Objetivo','Interpretación','Plan Terapéutico','Plan Diagnóstico','Próxima Cita'));
+  historias.forEach(h=>{
+    const p=pacientes.find(x=>Number(x.id)===Number(h.paciente_id));
+    rows.push(row(h.id,p?p.nombre:'?',h.fecha,h.motivo,h.subjetivo,h.objetivo,h.interpretacion,h.plan_terapeutico,h.plan_diagnostico,h.proxima));
+  });
+  rows.push(nl);
+
+  // AGENDA
+  rows.push('=== AGENDA ==='+nl);
+  rows.push(row('ID','Paciente','Especie','Propietario','Celular','Fecha','Hora','Motivo'));
+  agenda.forEach(a=>rows.push(row(a.id,a.paciente,a.especie,a.propietario,a.celular,a.fecha,a.hora,a.motivo)));
+  rows.push(nl);
+
+  // FÓRMULAS
+  rows.push('=== FÓRMULAS MÉDICAS ==='+nl);
+  rows.push(row('ID','Paciente','Fecha','Diagnóstico','Medicamentos','Indicaciones'));
+  formulas.forEach(f=>{
+    const p=pacientes.find(x=>Number(x.id)===Number(f.paciente_id));
+    const meds=JSON.parse(f.medicamentos||'[]').map(m=>`${m.nombre} ${m.dosis} ${m.frecuencia}`).join(' | ');
+    rows.push(row(f.id,p?p.nombre:'Sin paciente',f.fecha,f.diagnostico,meds,f.indicaciones));
+  });
+  rows.push(nl);
+
+  // INVENTARIO
+  rows.push('=== INVENTARIO ==='+nl);
+  rows.push(row('ID','Nombre','Cantidad','Unidad','Stock Mínimo','Precio COP','Valor Total'));
+  inventario.forEach(i=>rows.push(row(i.id,i.nombre,i.cantidad,i.unidad,i.minimo,i.precio,(Number(i.cantidad)*Number(i.precio||0)))));
+  rows.push(nl);
+
+  // MOVIMIENTOS CONTABLES
+  rows.push('=== CONTABILIDAD ==='+nl);
+  rows.push(row('ID','Fecha','Hora','Descripción','Tipo','Valor COP'));
+  movimientos.forEach(m=>rows.push(row(m.id,m.fecha,m.hora,m.descripcion,m.tipo,m.valor)));
+  rows.push(nl);
+
+  const csv='﻿'+rows.join('');
+  const blob=new Blob([csv],{type:'text/csv;charset=utf-8;'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');a.href=url;
+  a.download=`AMAVET_datos_completos_${new Date().toISOString().substring(0,10)}.csv`;
+  a.click();URL.revokeObjectURL(url);
 }
 
 init();
