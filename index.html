@@ -85,12 +85,12 @@ body{font-family:'DM Sans',sans-serif;background:var(--cream);color:var(--text);
 
 /* PATIENTS */
 .patient-grid{display:grid;gap:10px;}
-.patient-card{background:var(--white);border:1px solid var(--border);border-radius:var(--radius);padding:14px 16px;display:flex;align-items:center;gap:14px;transition:all 0.2s;}
+.patient-card{background:var(--white);border:1px solid var(--border);border-radius:var(--radius);padding:14px 16px;display:flex;align-items:flex-start;gap:12px;transition:all 0.2s;}
 .avatar{width:46px;height:46px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0;}
 .av-canino{background:var(--mint);}.av-felino{background:var(--rose);}.av-ave{background:var(--lemon);}.av-otro{background:#e8e8f0;}
-.patient-info{flex:1;min-width:0;}
+.patient-info{flex:1;min-width:0;overflow:hidden;}
 .patient-name{font-family:'Playfair Display',serif;font-size:15px;font-weight:500;}
-.patient-sub{font-size:11px;color:var(--text-muted);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.patient-sub{font-size:11px;color:var(--text-muted);margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:100%;}
 
 /* BADGES */
 .badge{display:inline-flex;align-items:center;padding:3px 9px;border-radius:20px;font-size:11px;font-weight:500;white-space:nowrap;}
@@ -259,7 +259,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--cream);color:var(--text);
           </div>
           <div class="field-row">
             <div class="field"><label>Raza</label><input id="p-raza" placeholder="Labrador"/></div>
-            <div class="field"><label>Edad</label><input id="p-edad" placeholder="3 años"/></div>
+            <div class="field"><label>Fecha de nacimiento</label><input id="p-edad" type="date"/></div>
           </div>
           <div class="field"><label>Nombre del propietario</label><input id="p-dueno" placeholder="Nombre completo"/></div>
           <div class="field-row">
@@ -793,18 +793,22 @@ function renderPacientes(){
   }
   if(!pacientes.length){c.innerHTML=`<div class="empty-state"><div class="empty-icon">🐾</div><div>No hay pacientes registrados aún</div></div>`;return;}
   if(q&&!lista.length){c.innerHTML=`<div class="empty-state"><div class="empty-icon">🔍</div><div>Sin resultados para "${q}"</div></div>`;return;}
-  const cards=lista.map(p=>`<div class="patient-card">
+  const cards=lista.map(p=>{
+    const edad=calcularEdad(p.edad);
+    const nConsultas=historias.filter(h=>Number(h.paciente_id)===Number(p.id)).length;
+    return `<div class="patient-card">
     <div class="avatar ${AVCLS[p.especie]||'av-otro'}">${EMOJIS[p.especie]||'🐾'}</div>
     <div class="patient-info">
       <div class="patient-name">${EMOJIS[p.especie]||'🐾'} ${p.nombre}</div>
-      <div class="patient-sub">${p.especie||''}${p.raza?' · '+p.raza:''} · ${p.edad||'?'}</div>
-      <div class="patient-sub">👤 ${p.dueno||''} · 📞 ${p.tel||''}${p.email?' · ✉️ '+p.email:''}</div>
+      <div class="patient-sub">${p.especie||''}${p.raza?' · '+p.raza:''} · ${edad}</div>
+      <div class="patient-sub">👤 ${p.dueno||''}${p.cedula?' C.C: '+p.cedula:''}</div>
+      <div class="patient-sub">📞 ${p.tel||''}${p.email?' · ✉️ '+p.email:''}</div>
     </div>
     <div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px;flex-shrink:0;">
-      <span class="badge badge-mint">${historias.filter(h=>Number(h.paciente_id)===Number(p.id)).length} consultas</span>
+      <span class="badge badge-mint" style="white-space:nowrap;">${nConsultas} consulta${nConsultas!==1?'s':''}</span>
       <button class="btn btn-sm btn-lemon" onclick="abrirEdicionPaciente(${p.id})">✏️ Editar</button>
     </div>
-  </div>`).join('');
+  </div>`;}).join('');
   const hint=!q&&pacientes.length>2?`<div style="text-align:center;padding:10px;font-size:12px;color:var(--text-muted);">Mostrando los 2 más recientes · Busca por nombre para ver todos (${pacientes.length} total)</div>`:'';
   c.innerHTML=cards+hint;
 }
@@ -913,7 +917,7 @@ function pdfDatosBox(doc,paciente,extra,y){
   y+=6;
   doc.setFont('helvetica','bold');doc.text('Especie:',14,y+3);doc.setFont('helvetica','normal');doc.text(paciente.especie||'',32,y+3);
   doc.setFont('helvetica','bold');doc.text('Raza:',70,y+3);doc.setFont('helvetica','normal');doc.text(paciente.raza||'',83,y+3);
-  doc.setFont('helvetica','bold');doc.text('Edad:',140,y+3);doc.setFont('helvetica','normal');doc.text(paciente.edad||'',153,y+3);
+  doc.setFont('helvetica','bold');doc.text('Edad:',140,y+3);doc.setFont('helvetica','normal');doc.text(calcularEdad(paciente.edad),153,y+3);
   y+=6;
   // Nombre mascota destacado
   doc.setFillColor(248,248,248);doc.rect(10,y,190,8,'F');
@@ -1830,8 +1834,8 @@ function exportarTodosLosDatos(){
 
   // PACIENTES
   rows.push('=== PACIENTES ==='+nl);
-  rows.push(row('ID','Nombre','Especie','Raza','Edad','Propietario','Cédula','Teléfono','Email'));
-  pacientes.forEach(p=>rows.push(row(p.id,p.nombre,p.especie,p.raza,p.edad,p.dueno,p.cedula,p.tel,p.email)));
+  rows.push(row('ID','Nombre','Especie','Raza','Fecha Nacimiento','Edad','Propietario','Cédula','Teléfono','Email'));
+  pacientes.forEach(p=>rows.push(row(p.id,p.nombre,p.especie,p.raza,p.edad,calcularEdad(p.edad),p.dueno,p.cedula,p.tel,p.email)));
   rows.push(nl);
 
   // HISTORIAS
@@ -2021,6 +2025,24 @@ function renderFormulasExam(){
   }).join('');
 }
 
+
+function calcularEdad(fechaNac){
+  if(!fechaNac)return '?';
+  // Si no parece una fecha ISO, devolver como está (datos viejos)
+  if(!fechaNac.includes('-'))return fechaNac;
+  const hoy=new Date();
+  const nac=new Date(fechaNac+'T12:00:00');
+  if(isNaN(nac))return fechaNac;
+  let años=hoy.getFullYear()-nac.getFullYear();
+  let meses=hoy.getMonth()-nac.getMonth();
+  let dias=hoy.getDate()-nac.getDate();
+  if(dias<0){meses--;dias+=30;}
+  if(meses<0){años--;meses+=12;}
+  if(años>0)return años===1?'1 año':`${años} años`;
+  if(meses>0)return meses===1?'1 mes':`${meses} meses`;
+  return dias<=1?'Recién nacido':`${dias} días`;
+}
+
 init();
 }
 
@@ -2159,6 +2181,9 @@ function renderFormulasExam(){
   }).join('');
 }
 
+
+
+
 init();
   }
   // Si no hay sesión, el login-screen queda visible
@@ -2176,7 +2201,7 @@ init();
     </div>
     <div class="field-row">
       <div class="field"><label>Raza</label><input id="pedit-raza"/></div>
-      <div class="field"><label>Edad</label><input id="pedit-edad"/></div>
+      <div class="field"><label>Fecha de nacimiento</label><input id="pedit-edad" type="date"/></div>
     </div>
     <div class="field"><label>Nombre del propietario</label><input id="pedit-dueno"/></div>
     <div class="field-row">
